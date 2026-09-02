@@ -1,0 +1,401 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{booktabs}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+    pdftitle={Test-Taker Experiences of Standardized Testing: A Scoping Review},
+    pdfauthor={TTX Automatic Literature Reviewer}
+}
+
+\title{Test-Taker Experiences of Standardized Testing:\\ A Scoping Literature Review}
+\author{Draft synthesis prepared from the \emph{TTX Automatic Literature Reviewer} corpus}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent This review synthesizes 30 open-access papers on the lived experience of taking standardized and high-stakes tests, drawn from a corpus assembled by an automated, continuously-running literature-scanning pipeline. The corpus spans educational, language-testing, and personnel-selection contexts and covers four recurring dimensions of test-taker experience: (1) the psychological and emotional toll of high-stakes testing, particularly anxiety and stress; (2) perceptions of fairness and reactions to testing outcomes and procedures; (3) how the mode of test delivery -- paper, computer, video, or AI-mediated -- shapes test-takers' comfort and trust; and (4) the surveillance and privacy tensions introduced by remote proctoring. A cross-cutting finding is that the accessible, open literature on this topic is overwhelmingly English-language and Anglophone/Western in origin; the pipeline's current sources yielded no genuinely relevant Spanish- or French-language material, which we treat as a finding about the evidence base itself rather than a gap to paper over. This version of the review additionally adopts the conceptual framework for Test-Taker eXperience (TTX) proposed by \citet{araneda2025ttxmodel} and the invalidity-hypothesis taxonomy from \citet{araneda2023dissertation}: every paper in the corpus is mapped onto the model's three dimensions (temporal stage, type of interaction, level of sense-making), and the concrete invalidity hypothesis each paper's findings suggest is listed against the model's five invalidity types. The methodology section documents the automated search strategy, the relevance-filtering approach, and a manual screening pass conducted for this review, so that the review's evidentiary basis is auditable and reproducible.
+\end{abstract}
+
+\section{Introduction}
+
+Standardized tests mediate some of the most consequential decisions in a person's academic and professional life: university admission, professional licensure, immigration eligibility, and school accountability all lean on the assumption that a test score is a fair, stable, and interpretable signal. Historically, the research literature on standardized testing has been dominated by the psychometric perspective -- reliability, validity, item response theory -- with comparatively less attention paid to the perspective of the person sitting the test. Over the last decade, however, a distinct and growing body of work has begun to treat the \emph{test-taker's experience} as a legitimate object of study in its own right: how test-takers feel before, during, and after a test; how they interpret and react to the fairness of the process; how new modes of delivery (computer-based, video-mediated, AI-proctored) change that experience; and how teachers and institutions perceive the effects of high-stakes testing on the people subjected to it.
+
+This review asks: \emph{what does the currently accessible open-access and preprint literature reveal about how test-takers experience standardized and high-stakes testing, across psychological, procedural, technological, and institutional dimensions?} It is deliberately scoped to what an automated, multilingual, daily-running literature scanner can currently retrieve and verify as relevant -- not a claim to exhaustive coverage of the field. Section~\ref{sec:methodology} documents exactly how the underlying corpus was assembled, filtered, and screened, so that the scope and limits of the synthesis that follows are transparent.
+
+\section{Conceptual Framework: The TTX Model}
+\label{sec:ttxmodel}
+
+To move beyond an unstructured thematic synthesis, this review adopts a published conceptual framework for test-taker experience rather than inventing an ad hoc one. \citet{araneda2025ttxmodel} propose a model for \emph{Test-Taker eXperience} (TTX) -- a term originating with researchers at Duolingo \citep{burstein2021ttxorigin} -- built from three orthogonal dimensions, and \citet{araneda2023dissertation} extends this model into a taxonomy of \emph{invalidity hypotheses} that test-taker experience evidence can surface. Both are used here to organize the corpus, not merely to summarize it.
+
+\subsection{Three Dimensions of Test-Taker Experience}
+
+Drawing on Dewey's \citeyearpar{dewey1938} principles of continuity, interaction, and sense-making, and on Forlizzi and Battarbee's \citeyearpar{forlizzi2004} interaction-centered model of user experience, \citet{araneda2025ttxmodel} define test-taker experience along three dimensions:
+
+\begin{description}[leftmargin=3.6cm, style=nextline]
+    \item[Temporal stage] \emph{When}, relative to the test itself, the experience occurs: \textbf{ante-experience} (well before an examinee starts preparing), \textbf{pre-experience} (preparing, once taking the test is certain), \textbf{zero-experience} (during the test), \textbf{inter-post experience} (between taking the test and receiving results), \textbf{post experience} (immediately after receiving results), and \textbf{long-term experience} (well after results are received).
+    \item[Type of interaction] \emph{What kind} of encounter between examinee and test is involved: \textbf{fluent} (automatic, pre-conscious, e.g. navigating a familiar interface), \textbf{cognitive} (effortful mental processing), \textbf{emotional} (affect -- anxiety, boredom, fun), \textbf{expressive} (self-expression in reaction to the test), and \textbf{physical} (bodily interactions and needs, including physiological stress responses).
+    \item[Level of sense-making] \emph{How processed} the experience is when reported: \textbf{free-stream} (raw, barely-processed stream of self-talk), \textbf{immediate} (an initial, incomplete integration of something that just happened), \textbf{integrative} (a complete narrative with a beginning and end, constructed alone), \textbf{co-integrative} (the same, but co-constructed with peers, teachers, or other stakeholders), and \textbf{dialogical} (co-constructed specifically with the test designer, e.g. through public comments to a testing agency).
+\end{description}
+
+These dimensions are designed to be crossed: a given piece of evidence about test-taker experience -- a tweet, a survey response, an interview transcript -- can in principle be located at a specific temporal stage, interaction type, and sense-making level simultaneously.
+
+\subsection{Five Types of Invalidity Hypotheses}
+
+\citet{araneda2023dissertation} connects test-taker experience evidence directly to test validation by proposing that a validity argument answer four questions -- the \textbf{P.A.A.P. minimum}: is the argument \emph{Partial} and situated (acknowledging whose perspective it represents)? Is the test \emph{Appropriate} (ethical to use)? Is it \emph{Adequate} (scientifically sound for its construct)? Is it \emph{Preferable} to other adequate, appropriate alternatives? Correspondingly, five types of invalidity can be surfaced from test-taker experience evidence:
+
+\begin{description}[leftmargin=3.6cm, style=nextline]
+    \item[Value rejection] (Appropriateness) An ethical objection to the test itself.
+    \item[Construct under-representation] (Adequacy) The test, or part of it, fails to capture an aspect of the construct it was meant to measure.
+    \item[Construct-irrelevant interaction] (Adequacy) An interaction between examinee and test occurs that is spurious to the construct being measured (the classic example is test anxiety inflating or deflating a score independent of the ability being assessed).
+    \item[Purpose misfit] (Adequacy) The test fails at its purpose as a measurement device -- e.g., its reliability or error structure does not fit the needs of the context in which it is used.
+    \item[Failed test expectation] (Preferability) A side expectation not directly tied to the test's core purpose -- a societal goal, an experiential requirement -- goes unmet.
+\end{description}
+
+Unlike a conventional threats-to-validity checklist, this taxonomy is explicitly meant to be populated \emph{from} test-taker experience evidence: a researcher studies examinees' (and other stakeholders') experiences, generates invalidity hypotheses grounded in what was observed or reported, and then investigates each hypothesis with further evidence. Sections~\ref{sec:mapping} and~\ref{sec:invalidity} apply both parts of this framework -- the three experience dimensions and the five invalidity types -- to the 30-paper corpus described in Section~\ref{sec:methodology}.
+
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Automated Search Pipeline}
+
+The corpus underlying this review is produced by an automated pipeline (the \emph{TTX Automatic Literature Reviewer}) that runs daily and queries two free, key-free sources at the time of writing: \textbf{SHARE} (\texttt{share.osf.io}), an aggregator that indexes OSF's own preprint servers (PsyArXiv, EdArXiv, SocArXiv) alongside hundreds of other open repositories worldwide, and \textbf{arXiv}. Support for a third source, \textbf{CORE.ac.uk} -- a large aggregator with substantially stronger non-English open-access coverage -- has been implemented but is not yet enabled pending an API key.
+
+For each of three target languages (English, Spanish, French), every source is queried for records that contain at least one term from a curated \emph{topic} set (e.g., \textit{standardized test}, \textit{high-stakes testing}, \textit{test taker}) \textbf{and} at least one term from a curated \emph{experience} set (e.g., \textit{test anxiety}, \textit{perceptions}, \textit{wellbeing}, \textit{stress}, \textit{fairness}). This two-group query structure is intended to bias retrieval toward records that are about both standardized testing \emph{and} the subjective experience of it, rather than standardized testing in general.
+
+Following the adoption of the TTX model (Section~\ref{sec:ttxmodel}), the experience-term set and the client-side relevance gate (Section~\ref{sec:relevance}) were extended with the model's own vocabulary -- \textit{assessment experience}, \textit{construct-irrelevant}, and \textit{invalidity hypothesis} -- so that future runs of the pipeline explicitly recognize literature that engages with this framework or its terminology, rather than relying only on the generic testing/experience terms used to build the corpus analyzed in this version of the review.
+
+\subsection{Relevance Filtering}
+\label{sec:relevance}
+
+Different search backends match and rank free text inconsistently -- some effectively required all query terms to be present, others scored by partial overlap, which in early testing let single generic words (e.g., a Spanish-language paper matching only on \textit{estudiantil}, ``student-related'') pull in clearly unrelated records. To compensate, every candidate record from every source -- including snowballed candidates, see below -- is passed through a second, client-side relevance gate: a record is retained only if its title and abstract, normalized for case and accent, contain at least one phrase from a curated relevance-keyword list spanning all three target languages.
+
+\subsection{Snowballing}
+\label{sec:snowball_persistent}
+
+Newly retained records are used as seeds for citation snowballing via the Semantic Scholar Graph API: each seed's \emph{references} (backward snowball), the papers that \emph{cite} it (forward snowball), and Semantic Scholar's \emph{recommendations} (its equivalent of a ``related articles'' panel) are retrieved and passed through the same relevance gate before being added to the corpus. This substitutes for Google Scholar's related-work features, which have no public API and cannot be scraped without violating Google's terms of service.
+
+In addition to seeds found by that day's keyword search, the pipeline now also snowballs every run from a short list of \emph{persistent seeds} -- foundational papers specified directly in configuration, independent of whether they were matched by any query. \citet{araneda2023dissertation} is configured as the first such seed, so that papers which cite or build on the Experiential Approach to test validation are picked up as forward citations even on days the keyword search finds nothing new. When a seed's DOI is not indexed by Semantic Scholar under that identifier -- common for institutional-repository DOIs such as this dissertation's, minted by a university library rather than a journal publisher -- the pipeline falls back to a title search before giving up on that seed for the run.
+
+\subsection{Corpus at Time of Writing}
+
+As of the run on 2026-08-13, the pipeline had accumulated 59 records that passed the automated relevance gate: 54 in English, 5 in Spanish, and 0 in French.
+
+\subsection{Manual Screening for This Review}
+\label{sec:screening}
+
+The automated keyword gate is a precision heuristic, not a substitute for judgment, and it let through a number of records that share vocabulary with the topic but are not substantively about test-taker experience -- for example, papers on COVID-19 medical testing, robotics disturbance-rejection benchmarking, general algorithmic-fairness theory that uses ``standardized test scores'' only as an illustrative feature, and, notably, one advertisement for a commercial exam-cheating service that had been indexed by the aggregator as though it were a scholarly record. For this review, each of the 59 automatically retained records was manually screened against the review question; near-duplicate entries (the same record surfaced independently by more than one query) were also collapsed. This manual pass reduced the corpus to the \textbf{30 records} synthesized below.
+
+The five Spanish-language records were screened out in their entirety at this stage: on inspection, all five concerned evaluation research unrelated to test-taker experience (an early-childhood program impact evaluation, a study of armed-conflict ceasefire effects on standardized test scores as an \emph{outcome} measure, an athletics intervention, and similar), which had matched the automated gate only through generic evaluation-research vocabulary (e.g., \textit{bienestar}, ``wellbeing''; \textit{estandarizada}, ``standardized''). We treat the absence of genuinely relevant Spanish- or French-language material as a substantive finding about the current evidence base accessible through key-free sources, discussed further in Section~\ref{sec:limitations}.
+
+\subsection{Bibliographic Enrichment}
+
+The pipeline's own metadata store records title, authors, a publication date, an abstract where available, and a DOI or URL, but not a journal or venue name. For this review, venue, volume, issue, and page information were retrieved separately via the Crossref and DataCite public APIs for the subset of records with a resolvable DOI, and cross-checked against the pipeline's recorded publication year (this caught at least one indexing error, discussed in Section~\ref{sec:limitations}).
+
+\section{Findings}
+
+\subsection{Psychological and Emotional Dimensions of Test-Taking}
+
+The most consistent theme across the corpus is that high-stakes testing carries a measurable psychological cost, and that this cost is treated by researchers as a legitimate target for intervention rather than an unavoidable by-product of assessment. \citet{george2024examstress} frames exam-related student mental health strain as a global, epidemic-scale phenomenon, situating exam-period stress within broader adolescent suicide statistics and arguing for its recognition as a public-health concern rather than a purely educational one. \citet{tseng2024taiwanese} contribute a longitudinal study of high-stakes test anxiety among Taiwanese adolescents, extending this line of work to an East Asian context in which standardized examinations play an outsized role in secondary and tertiary admissions. \citet{wallace2010motivation} likewise examine the relationship between high-stakes testing, motivation, anxiety, and engagement specifically in children, though the source record for this study lacks a machine-readable abstract, so its findings are not characterized further here.
+
+Two studies in the corpus move from documenting test anxiety to actively mitigating it. \citet{amsberry2018sound} report a four-week within-subjects study in which exposure to preferred music during testing improved performance by as much as 22\% relative to silent or non-preferred soundscapes, suggesting that manipulating the testing \emph{environment} -- rather than only the test-taker's coping strategies -- can meaningfully change the experience of high-stakes testing. \citet{watson2026cat} address a more procedural source of anxiety: in computerized adaptive testing (CAT), abrupt jumps in item difficulty between consecutive questions can themselves trigger anxiety and frustration, and the authors propose and compare four algorithmic methods for smoothing difficulty progression specifically to improve test-taker experience. \citet{eleje2023cbtppt} compare computer-based and paper-and-pencil test administration among Nigerian secondary school students, examining both academic achievement and test anxiety as outcomes of delivery mode.
+
+\subsection{Perceptions of Fairness and Reactions to Outcomes}
+
+A second cluster of studies treats fairness not as a statistical property of a test but as something test-takers actively \emph{perceive} and \emph{react to}. \citet{feeney2022rejection} examine how the framing of post-test feedback given to rejected job applicants -- absolute scores versus scores framed relative to other candidates -- shapes applicants' fairness perceptions and their behavioral intentions toward the hiring organization. \citet{stierwalt2000explanations}, in an earlier but closely related study, show that organizational explanations offered for the use of a selection test interact with outcome favorability and test-takers' self-efficacy to jointly shape their perceptions of the test. \citet{zhou2024genderforced} examine gender differences in test-taker reactions to, and fairness perceptions of, multidimensional forced-choice personality measures, a test format increasingly used in personnel selection specifically because it resists faking.
+
+Other work in this cluster addresses fairness at the level of test \emph{content} rather than test \emph{outcomes}. \citet{grand2013sensitivity} study the effectiveness of ``sensitivity review'' practices -- expert review intended to catch test items that could unfairly disadvantage or offend particular groups before they reach test-takers -- and how such problematic content, when missed, affects testing outcomes. \citet{suk2026unfairness} formalize test unfairness for non-manipulable group characteristics (e.g., gender, race, English-language-learner status) through the lens of differential item functioning (DIF), addressing the long-standing methodological question of what it even means to speak of a ``causal effect'' of group membership on item performance. With the rise of AI-assisted test-content generation, \citet{stowe2024fairness} extend this content-fairness concern to automatically generated items for a large-scale English proficiency test, flagging generated content that could disadvantage or distract a subset of test-takers even when it displays none of the more commonly studied forms of model bias. \citet{burstein2024responsible} report a case study of Responsible AI practices at the Duolingo English Test, explicitly framing ``test equity'' -- fairness to all test-takers -- alongside test quality as a governing design principle for AI-powered assessment.
+
+\subsection{Mode of Delivery: Paper, Computer, Video, and AI-Mediated Testing}
+
+A substantial share of the corpus compares how test-takers experience different delivery modes for the same underlying construct. \citet{dang2024vstep} compare computer-delivered and face-to-face administrations of two English speaking-proficiency tests within the Vietnamese Standardized Test of English Proficiency (VSTEP), explicitly incorporating test-takers' own reported experiences alongside score comparability across 75 and 82 test-takers respectively. \citet{nakatsuhara2021videoconferencing} compare video-conferencing and face-to-face administrations of the IELTS Speaking Test with 99 test-takers and 10 trained examiners, finding via Many-Facet Rasch Model analysis that delivery mode did not produce a meaningful difference in test-taker scores. \citet{quaid2021fluency} instead focus on a qualitative dimension largely neglected by score-comparability studies: how test-taker \emph{fluency} -- both spoken output and underlying processing fluency -- is expressed differently in simulated (computer-based) versus face-to-face oral proficiency interviews. \citet{amengual2017views} directly solicit test-takers' own views via an open questionnaire administered to 80 APTIS speaking-test takers, examining the perceived advantages and disadvantages of computer-based relative to face-to-face oral assessment. \citet{nguyen2026examiners} complement this test-taker-facing literature with the examiner's perspective on computer-assisted language testing (CALT), situating growing test-taker familiarity with digital platforms such as IELTS, APTIS, and Duolingo within the broader shift toward digital testing environments.
+
+The newest delivery-mode question in the corpus concerns artificial intelligence. \citet{zhang2023testtakers} report what the authors describe as the first empirical study of test-taker perceptions of AI integration into language testing, based on interviews and surveys with English test-takers: participants perceived AI as potentially enhancing fairness, consistency, and availability, while simultaneously expressing mistrust regarding the reliability and interactivity of AI-mediated testing -- a genuinely mixed reaction that echoes the fairness-versus-trust tension found elsewhere in the corpus.
+
+\subsection{Surveillance, Privacy, and Integrity in Remote Testing}
+
+The shift toward remote and online testing, accelerated by the Covid-19 pandemic, has introduced a distinct experiential concern: being watched. \citet{balash2021examiners} survey students' privacy and security perceptions of online proctoring services, combining an analysis of user reviews of proctoring browser extensions with an online survey (n=102). They find that participants are uneasy about both the volume and the personal nature of information shared with proctoring companies, but many also recognize a trade-off between pandemic-era safety and the invasiveness of proctoring, and that institutional power dynamics and students' trust in their institutions appear to dissuade open opposition to remote proctoring. \citet{mukherjee2024proctoring} probe a possible mitigation: whether selectively obfuscating parts of a proctoring video feed (a test-taker's face, body, or background) can preserve effective cheating detection while improving perceived privacy and fairness. Combining expert interviews (N=9) with a large vignette experiment (N=259 potential test-takers), they find that advanced obfuscation methods (e.g., silhouetting, avatar replacement) improved perceived privacy and fairness relative to conventional blurring, but at some cost to perceived sufficiency of cheating detection -- and that in practice, non-expert participants still preferred the simpler, more familiar blurring method for material they were willing to share, revealing a gap between technically superior privacy protection and what test-takers are actually comfortable adopting.
+
+\subsection{Teacher and Institutional Perspectives on the Student Testing Experience}
+\label{sec:teacherperspectives}
+
+Several studies approach test-taker experience indirectly, through the eyes of teachers and other institutional actors rather than test-takers themselves -- a complementary lens, since teachers are often positioned to observe patterns of student stress and disengagement across many individual test-takers. \citet{steuart2024ruralteachers} study rural U.S. teachers' perceptions of how high-stakes testing affects high school students, addressing a rural-versus-urban gap noted in the broader literature, which the author observes has focused disproportionately on urban and diverse school systems. \citet{weick2024instruction} and \citet{reese2004teachersperceptions} both examine teacher perceptions of how high-stakes testing shapes instructional practice, the latter specifically in relation to school leadership. \citet{mccauley2021irish} extend this institutional-perspective literature outside the United States, examining ``key actor'' perspectives -- a category that includes but is not limited to teachers -- on standardised assessment in the Irish primary school context, a system in which the stakes attached to test results are explicitly lower than in more high-stakes national contexts.
+
+\subsection{Systemic and Policy-Level Consequences}
+
+Two studies situate individual test-taker experience within larger systemic or policy dynamics. \citet{zhangw2024naplan} evaluate Australia's National Assessment Program for Literacy and Numeracy (NAPLAN) reform, linking its high-stakes, standardized character to exacerbated student anxiety and stress and to specific inequity for students with a language background other than English (LBOTE), and recommend policy responses including a transition to online testing and increased investment in assessment literacy. \citet{ladant2023saliency} provide causal evidence, using a natural experiment among Italian primary school students, that a \emph{visible} class rank derived from teachers' exam grades has a substantial effect on students' self-perceptions, which in turn affects their subsequent academic performance -- independent of an ``invisible'' rank computed from unreported standardized test scores. This is a useful complication for the broader review: it suggests that test-taker experience is shaped not only by the test itself, but by how test-derived information is socially packaged and disclosed.
+
+\subsection{Test-Taker Response Behavior and Self-Presentation}
+
+A smaller cluster of studies examines how test-takers actively shape their own responses under high-stakes conditions. \citet{kleinbub2026socialdesirability} model how differing perceptions of social desirability among test-takers introduce bias into self-report and forced-choice personnel-selection measures via faking behavior, work that directly extends the Multidimensional Nominal Response Model used to detect such faking. \citet{lee2025forcedchoice} situate this concern within a broader 80-year methodological history, providing a systematic review of forced-choice measurement -- including faking resistance -- that offers useful context for the more specific studies elsewhere in this corpus.
+
+\subsection{A Registered Effort at Synthesis}
+
+One record in the corpus is itself a direct attempt at the same undertaking as this review. \citet{kaleta2025studentperspectives} is a study registration (not yet a completed synthesis) for an AI-assisted systematic literature review of empirical research on how students experience and respond to high-stakes testing between 2015 and 2025. Notably, the registration's own stated rationale is that ``empirical syntheses that foreground students' own perspectives remain scarce'' -- an independent observation that corroborates both the thematic gap this review's corpus addresses and the broader difficulty, documented in Section~\ref{sec:limitations}, of assembling first-person test-taker evidence through currently available open channels.
+
+\section{Mapping the Corpus onto the TTX Model}
+\label{sec:mapping}
+
+Table~\ref{tab:mapping} locates each paper in the corpus (Section~\ref{sec:screening}) within the three dimensions of the TTX model described in Section~\ref{sec:ttxmodel}: the temporal stage(s) of the testing process it addresses, the type(s) of examinee--test interaction it studies, and the level of sense-making at which the underlying evidence was collected. This mapping is \textbf{this review's own interpretive application} of \citeauthor{araneda2025ttxmodel}'s (\citeyear{araneda2025ttxmodel}) framework -- none of the 30 papers were written using this vocabulary, so classifications reflect a reading of each paper's design and findings against the model's definitions, not a claim the original authors made. Where a paper's evidence is not first-person test-taker experience at all (e.g., an expert content review, a statistical DIF analysis, or a meta-level study registration), the interaction and sense-making cells are marked \emph{N/A} and a note explains why, rather than forcing a fit. Several papers span more than one stage or interaction type; the table lists the ones most central to each paper's actual evidence, not an exhaustive tagging.
+
+Two patterns are worth naming directly. First, \textbf{zero-experience} (during the test itself) and \textbf{integrative} sense-making (a complete, individually-constructed narrative, typically from a post-hoc survey or interview) dominate the corpus -- the most common combination in test-taker experience research is still ``ask people to summarize how the test felt, afterward.'' Second, \textbf{co-integrative} and \textbf{dialogical} sense-making -- experience co-constructed with peers, teachers, or the test designer -- appear almost exclusively in the teacher-perspective and Responsible-AI papers (Section~\ref{sec:teacherperspectives}), not in first-person test-taker studies. This gap matches \citeauthor{araneda2025ttxmodel}'s own observation that the higher, more structured levels of sense-making are the least studied in current practice.
+
+{\small
+\begin{longtable}{p{2.6cm} p{4.3cm} p{4.3cm} p{3.3cm}}
+\caption{Corpus Mapped onto the TTX Model's Three Dimensions} \label{tab:mapping} \\
+\toprule
+\textbf{Paper} & \textbf{Temporal Stage(s)} & \textbf{Interaction Type(s)} & \textbf{Sense-Making Level} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\tablename\ \thetable{} -- continued} \\
+\toprule
+\textbf{Paper} & \textbf{Temporal Stage(s)} & \textbf{Interaction Type(s)} & \textbf{Sense-Making Level} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\citet{zhang2023testtakers} & Zero (AI-mediated test) $\rightarrow$ Post (interview) & Cognitive, Emotional, Expressive & Integrative \\
+\citet{mukherjee2024proctoring} & Pre (vignette, anticipated) + Zero (proctored exam) & Emotional, Physical, Expressive & Integrative \\
+\citet{stowe2024fairness} & Pre-experience (item development) & N/A -- expert content review, not examinee & N/A \\
+\citet{balash2021examiners} & Zero (proctored exam) & Emotional, Cognitive, Expressive & Integrative \\
+\citet{zhangw2024naplan} & Pre $\rightarrow$ Long-term (policy-level) & Emotional, Cognitive & Co-integrative / Dialogical \\
+\citet{burstein2024responsible} & Ante $\rightarrow$ Long-term (whole ecosystem) & Cognitive, Expressive & Dialogical \\
+\citet{ladant2023saliency} & Post/Inter-post (rank disclosed) $\rightarrow$ Long-term & Cognitive, Emotional & Integrative \\
+\citet{suk2026unfairness} & Zero-experience (statistical trace only) & N/A -- inferred from item statistics, not self-report & N/A \\
+\citet{feeney2022rejection} & Post-experience (feedback after rejection) & Emotional, Cognitive, Expressive & Immediate / Integrative \\
+\citet{watson2026cat} & Zero-experience (item-by-item) & Emotional, Cognitive, Fluent & Free-stream / Immediate \\
+\citet{george2024examstress} & Pre $\rightarrow$ Long-term (exam season, societal) & Emotional, Physical & Co-integrative \\
+\citet{kaleta2025studentperspectives} & N/A -- meta-level review protocol & N/A & N/A \\
+\citet{steuart2024ruralteachers} & Pre $\rightarrow$ Long-term (teacher-observed) & Emotional, Cognitive & Co-integrative (teacher) \\
+\citet{eleje2023cbtppt} & Zero-experience (CBT/PPT test) & Emotional, Cognitive, Fluent & Integrative \\
+\citet{stierwalt2000explanations} & Pre (explanation given) + Post (favorability) & Cognitive, Emotional, Expressive & Integrative \\
+\citet{mccauley2021irish} & Pre $\rightarrow$ Post (multi-actor) & Cognitive, Emotional & Co-integrative \\
+\citet{grand2013sensitivity} & Pre-experience (item development) & N/A -- expert content review, not examinee & N/A \\
+\citet{zhou2024genderforced} & Post-experience (reactions to format) & Expressive, Emotional, Cognitive & Integrative \\
+\citet{amsberry2018sound} & Zero-experience (environmental manipulation) & Emotional, Physical, Fluent & Free-stream / Immediate \\
+\citet{weick2024instruction} & Long-term (instructional practice) & Cognitive & Co-integrative (teacher) \\
+\citet{dang2024vstep} & Zero-experience (speaking test) & Cognitive, Emotional, Fluent & Integrative \\
+\citet{reese2004teachersperceptions} & Long-term (instructional practice) & Cognitive, Emotional & Co-integrative (teacher) \\
+\citet{wallace2010motivation} & Pre + Zero-experience & Emotional, Cognitive & Immediate / Integrative \\
+\citet{tseng2024taiwanese} & Long-term (longitudinal, adolescence) & Emotional & Integrative \\
+\citet{lee2025forcedchoice} & N/A -- methodological review & N/A & N/A \\
+\citet{nguyen2026examiners} & Zero-experience (examiner perspective) & Cognitive & Co-integrative (examiner) \\
+\citet{kleinbub2026socialdesirability} & Zero-experience (in-the-moment self-presentation) & Cognitive, Expressive & Free-stream / Immediate \\
+\citet{nakatsuhara2021videoconferencing} & Zero-experience (speaking test) & Cognitive, Fluent, Emotional & Integrative \\
+\citet{quaid2021fluency} & Zero-experience (oral interview) & Cognitive, Expressive & Free-stream / Immediate \\
+\citet{amengual2017views} & Post-experience (open questionnaire) & Expressive, Cognitive, Emotional & Integrative \\
+\end{longtable}
+}
+
+\section{Invalidity Hypotheses Suggested by the Corpus}
+\label{sec:invalidity}
+
+Table~\ref{tab:invalidity} restates each paper's central finding as a testable \emph{invalidity hypothesis}, in the sense defined by \citet{araneda2023dissertation} (Section~\ref{sec:ttxmodel}), and tags it with one of the five invalidity types and its corresponding P.A.A.P. question. As with Table~\ref{tab:mapping}, these are \textbf{hypotheses this review derived from each paper's reported findings}, phrased in the affirmative-claim style \citeauthor{araneda2023dissertation} uses so they could, in principle, be investigated with further evidence -- they are not quotations, and in most cases the original authors did not frame their own work in invalidity-hypothesis terms. \citet{kaleta2025studentperspectives} is omitted from this table: as a study registration, it does not yet report findings from which a hypothesis could be drawn. Two papers (\citeauthor{dang2024vstep}, \citeyear{dang2024vstep}; \citeauthor{nakatsuhara2021videoconferencing}, \citeyear{nakatsuhara2021videoconferencing}) are marked ``tested, largely refuted'' because their own results argue \emph{against} the hypothesis they investigated -- included here for completeness, since a validity argument benefits as much from evidence against an invalidity hypothesis as from evidence for one.
+
+{\small
+\begin{longtable}{p{2.6cm} p{8.6cm} p{2.6cm} p{1.7cm}}
+\caption{Invalidity Hypotheses Derived from the Corpus, by Type and P.A.A.P.\ Category} \label{tab:invalidity} \\
+\toprule
+\textbf{Paper} & \textbf{Invalidity Hypothesis} & \textbf{Type} & \textbf{P.A.A.P.} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\tablename\ \thetable{} -- continued} \\
+\toprule
+\textbf{Paper} & \textbf{Invalidity Hypothesis} & \textbf{Type} & \textbf{P.A.A.P.} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\citet{zhang2023testtakers} & AI-mediated test interaction introduces test-taker mistrust that affects engagement independent of language ability. & Construct-irrelevant interaction & Adequacy \\
+\citet{mukherjee2024proctoring} & Perceived surveillance during remote proctoring is an ethical harm independent of its cheating-detection benefit. & Value rejection & Appropriateness \\
+\citet{stowe2024fairness} & AI-generated items can contain content that disadvantages or distracts a subset of test-takers, unrelated to the construct. & Construct-irrelevant interaction & Adequacy \\
+\citet{balash2021examiners} & Distrust of proctoring software is a construct-irrelevant stressor during testing. & Construct-irrelevant interaction & Adequacy \\
+\citet{zhangw2024naplan} & High-stakes standardization exacerbates anxiety and disadvantages LBOTE students independent of literacy/numeracy ability. & Construct-irrelevant interaction & Adequacy \\
+\citet{zhangw2024naplan} & Public accountability reporting (``My School'') does not achieve its intended societal goal of improved outcomes. & Failed test expectation & Preferability \\
+\citet{burstein2024responsible} & Absence of Responsible-AI standards in AI-powered assessment risks ethical rejection by test-takers. & Value rejection & Appropriateness \\
+\citet{ladant2023saliency} & Disclosing a visible class rank biases subsequent academic performance independent of the ability the rank was based on. & Construct-irrelevant interaction & Adequacy \\
+\citet{suk2026unfairness} & Differential item functioning across non-manipulable groups signals items that disadvantage specific groups independent of the target construct. & Construct-irrelevant interaction & Adequacy \\
+\citet{feeney2022rejection} & Framing of post-test feedback changes applicants' fairness perceptions independent of the selection decision's actual validity. & Failed test expectation & Preferability \\
+\citet{watson2026cat} & Abrupt item-difficulty jumps in adaptive testing trigger anxiety/frustration that affects responses independent of ability. & Construct-irrelevant interaction & Adequacy \\
+\citet{george2024examstress} & Exam-period psychological strain is a harm the testing system has not adequately mitigated. & Failed test expectation & Preferability \\
+\citet{george2024examstress} & The severity of exam-related mental-health harm may warrant ethical rejection of current high-stakes practice. & Value rejection & Appropriateness \\
+\citet{steuart2024ruralteachers} & Rural-specific resource gaps create construct-irrelevant disadvantage for rural test-takers under high-stakes testing. & Construct-irrelevant interaction & Adequacy \\
+\citet{eleje2023cbtppt} & Unfamiliarity with computer-based interfaces introduces mode-specific anxiety irrelevant to the Economics construct. & Construct-irrelevant interaction & Adequacy \\
+\citet{stierwalt2000explanations} & Inadequate organizational explanation for a selection test's use undermines perceived appropriateness independent of the test's adequacy. & Value rejection & Appropriateness \\
+\citet{mccauley2021irish} & Key actors may not endorse the uses made of standardised assessment results even where the test itself is adequate. & Failed test expectation & Preferability \\
+\citet{grand2013sensitivity} & Test items can contain content that disadvantages or offends specific groups if not caught by sensitivity review. & Construct-irrelevant interaction & Adequacy \\
+\citet{grand2013sensitivity} & Problematic item content that is not removed constitutes an ethical harm to affected test-takers. & Value rejection & Appropriateness \\
+\citet{zhou2024genderforced} & Test-taker reactions to forced-choice personality measures differ by gender, suggesting a format-driven construct-irrelevant interaction. & Construct-irrelevant interaction & Adequacy \\
+\citet{amsberry2018sound} & Uncontrolled ambient sound during testing is a construct-irrelevant environmental factor affecting performance. & Construct-irrelevant interaction & Adequacy \\
+\citet{weick2024instruction} & High-stakes testing distorts instructional practice away from the curriculum it is meant to support. & Purpose misfit & Adequacy \\
+\citet{dang2024vstep} & Computer-delivered and face-to-face speaking-test modes measure different constructs (tested, largely refuted for scores). & Purpose misfit & Adequacy \\
+\citet{reese2004teachersperceptions} & Teachers perceive high-stakes testing as narrowing instruction toward test content rather than the intended curriculum. & Purpose misfit & Adequacy \\
+\citet{wallace2010motivation} & Test anxiety and disengagement in children constitute construct-irrelevant variance in high-stakes contexts. & Construct-irrelevant interaction & Adequacy \\
+\citet{tseng2024taiwanese} & Chronic, longitudinally-developing test anxiety is a sustained construct-irrelevant factor across repeated high-stakes tests. & Construct-irrelevant interaction & Adequacy \\
+\citet{lee2025forcedchoice} & Faking under high-stakes conditions is a well-established construct-irrelevant response strategy in self-report measurement. & Construct-irrelevant interaction & Adequacy \\
+\citet{nguyen2026examiners} & Computer-assisted language tests under-capture aspects of communicative competence relative to human-mediated formats. & Construct under-representation & Adequacy \\
+\citet{kleinbub2026socialdesirability} & Differing perceptions of social desirability bias self-report responses via faking, independent of the trait being measured. & Construct-irrelevant interaction & Adequacy \\
+\citet{nakatsuhara2021videoconferencing} & Video-conferencing delivery measures a different speaking construct than face-to-face delivery (tested, largely refuted for scores). & Purpose misfit & Adequacy \\
+\citet{quaid2021fluency} & Simulated (computer-based) interviews under-represent the interactional fluency construct captured by face-to-face interviews. & Construct under-representation & Adequacy \\
+\citet{amengual2017views} & Test-takers report disadvantages of computer-based speaking tests (e.g., lack of interlocutor rapport) irrelevant to or under-representing the intended construct. & Construct-irrelevant interaction & Adequacy \\
+\end{longtable}
+}
+
+Read as a whole, Table~\ref{tab:invalidity} is heavily skewed toward \textbf{Adequacy} (25 of 32 hypotheses) and specifically toward \textbf{construct-irrelevant interaction} (18 of 32) -- test anxiety, mode-specific unfamiliarity, faking, distrust of AI or proctoring, and social-comparison effects all recur as the same underlying invalidity type applied to different testing contexts. \textbf{Appropriateness} concerns (value rejection) cluster around surveillance, AI transparency, and communication of test purpose -- ethical objections to \emph{how} a test is administered or explained, not to what it measures. \textbf{Preferability} concerns (failed test expectation) are the least common and the most societal in scope -- they involve side goals like student wellbeing or public accountability that a test was never designed to guarantee, but that stakeholders evidently expect it to support anyway. No paper in the corpus generated a clean \textbf{Partiality} hypothesis in \citeauthor{araneda2023dissertation}'s sense (an explicit acknowledgment of whose perspective a validity argument represents) or an isolated \textbf{Construct under-representation} hypothesis unaccompanied by a construct-irrelevant-interaction concern -- both are directions the corpus leaves comparatively unexplored.
+
+\section{Discussion}
+
+Across the 30-paper corpus, four cross-cutting patterns stand out. First, anxiety and stress are treated throughout as a consequential and actively addressable feature of high-stakes test-taking, not an unavoidable by-product -- researchers propose environmental (\citet{amsberry2018sound}), algorithmic (\citet{watson2026cat}), and policy-level (\citet{zhangw2024naplan}) interventions rather than treating stress as a fixed cost of assessment. Second, fairness is experienced \emph{procedurally}: test-takers react not only to whether an outcome is fair in some statistical sense, but to how that outcome is explained (\citet{feeney2022rejection}, \citet{stierwalt2000explanations}), how test content was screened (\citet{grand2013sensitivity}), and who reviewed it. Third, the shift toward computer-based, video-mediated, and AI-assisted testing layers a second, largely independent set of trust and privacy concerns on top of traditional test anxiety, with genuinely mixed evidence on whether new modes improve or worsen the test-taker's experience of fairness (\citet{zhang2023testtakers}, \citet{mukherjee2024proctoring}). Fourth, teacher- and institution-level perspectives consistently frame high-stakes testing as a source of pressure that propagates down to students, and this framing appears most acutely in under-studied contexts such as rural schools (\citet{steuart2024ruralteachers}) and education systems outside the United States (\citet{mccauley2021irish}, \citet{tseng2024taiwanese}, \citet{dang2024vstep}).
+
+A geographic and linguistic pattern is also worth naming directly: national contexts beyond the United States do appear in this corpus -- Vietnam, Taiwan, Nigeria, Ireland, Italy, Australia -- but almost entirely refracted through English-language publication venues. As documented in Section~\ref{sec:screening}, the pipeline's currently enabled sources did not surface any genuinely relevant Spanish- or French-language first-person account of test-taker experience, despite an explicit multilingual search strategy. This is a finding about the shape of the openly accessible evidence base itself, not merely a limitation of this particular review.
+
+Viewed through the TTX model (Sections~\ref{sec:mapping}--\ref{sec:invalidity}), these same four patterns reappear in more precise terms. The anxiety/stress literature is almost entirely \emph{zero-experience}, \emph{integrative} evidence -- retrospective self-report about the test itself -- which is exactly the combination \citet{araneda2025ttxmodel} identify (in their own mapping of methods to levels of sense-making and interaction type) as easiest to collect, and therefore likely over-represented here relative to harder-to-reach evidence such as free-stream physiological data or dialogical evidence co-constructed with a testing agency. The procedural-fairness literature maps cleanly onto \textbf{construct-irrelevant interaction} and \textbf{value rejection} (Table~\ref{tab:invalidity}), which is unsurprising since both are, by definition, about interactions and ethical judgments rather than about what the test measures. The technology-and-trust literature is where the corpus comes closest to \citeauthor{araneda2025ttxmodel}'s \textbf{dialogical} level -- Responsible-AI practices (\citet{burstein2024responsible}) are explicitly a structured dialogue between test designer and stakeholders -- but this remains the exception rather than the norm. And the teacher/institutional literature is the corpus's main source of \textbf{co-integrative} evidence, confirming that when test-taker experience is co-constructed with someone other than the test-taker alone, it is almost always a teacher, not a peer or the test designer.
+
+\section{Limitations}
+\label{sec:limitations}
+
+This review inherits limitations from both its automated data source and the additional manual synthesis performed here:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Source coverage.} At the time of writing, only two key-free sources (SHARE and arXiv) were enabled in the underlying pipeline. CORE.ac.uk integration, which indexes substantially more non-English and non-OSF-affiliated open-access repositories (e.g., SciELO, RedALyC, HAL), has been implemented but not yet activated, and is the most direct lever for closing the Spanish/French gap noted above.
+    \item \textbf{Preprint and repository bias.} The pipeline indexes preprints and open-access repository items rather than the full peer-reviewed journal record behind a paywall. Several of the studies cited here (Section~\ref{sec:screening}) are working papers, theses, or study registrations rather than peer-reviewed journal articles, and are cited as such where their status could be determined from Crossref or DataCite metadata.
+    \item \textbf{Abstract-level synthesis.} Six of the 30 retained records (\citet{stierwalt2000explanations}, \citet{zhou2024genderforced}, \citet{weick2024instruction}, \citet{reese2004teachersperceptions}, \citet{wallace2010motivation}, \citet{tseng2024taiwanese}) reached this review without a machine-readable abstract in the source metadata and are characterized above primarily by title and venue; their specific findings should be verified against the full text before being relied upon.
+    \item \textbf{Imperfect automated filtering.} The keyword-based relevance gate required a manual screening pass (Section~\ref{sec:screening}) to remove clear false positives, including medical testing, robotics benchmarking, generic algorithmic-fairness papers, and a commercial cheating-service advertisement that had been indexed alongside genuine scholarly records. Some subtler false positives or false negatives may remain undetected.
+    \item \textbf{Bibliographic verification caught at least one indexing error.} Cross-checking publication years against Crossref revealed that the source pipeline's recorded year for at least one record (\citet{reese2004teachersperceptions}) was incorrect by two decades (2004 rather than the indexed 2025), likely reflecting a repository's re-indexing date rather than original publication date. This suggests indexed publication dates elsewhere in the corpus should be treated as provisional unless independently verified.
+    \item \textbf{Snowballing yield.} Citation snowballing depends on Semantic Scholar's own indexing of a seed paper's DOI. Many OSF- and Zenodo-minted preprint DOIs were not found in Semantic Scholar's index, which likely constrained the snowball step's yield relative to its potential, particularly for non-arXiv seeds.
+    \item \textbf{Not a formal systematic review.} This is a scoping synthesis assembled from an automated pipeline plus a manual relevance screen conducted for this document; it does not follow a PRISMA-style protocol, and no formal risk-of-bias or study-quality appraisal was performed on the included studies.
+    \item \textbf{The TTX-model mapping and invalidity hypotheses are this review's interpretation, not the original authors' framing.} None of the 30 papers were written using \citeauthor{araneda2025ttxmodel}'s vocabulary, so Tables~\ref{tab:mapping} and~\ref{tab:invalidity} reflect a single reader's classification of each paper against the model's definitions. A different reader, or the original authors themselves, might reasonably tag some papers differently, particularly where a study spans multiple temporal stages or interaction types and only the most salient one was recorded. Similarly, some invalidity hypotheses in Table~\ref{tab:invalidity} are close paraphrases of a paper's own stated finding, while others (e.g., for \citet{grand2013sensitivity} or \citet{suk2026unfairness}) required more inference from a methods-focused paper to an experience-relevant claim.
+\end{itemize}
+
+\section{Conclusion}
+
+The literature accessible through this review's current sources depicts test-taker experience as genuinely multidimensional: an emotional experience (anxiety, stress, and the conditions that mitigate or worsen it), a procedural one (perceived fairness of both outcomes and the process that produced them), a technological one (trust in computer-based, video-mediated, and AI-assisted delivery), and an institutional one (how teachers and schools perceive and transmit testing pressure to students). Read through \citeauthor{araneda2025ttxmodel}'s TTX model, the corpus is concentrated in zero-experience, integrative-sense-making evidence and in construct-irrelevant-interaction and value-rejection invalidity hypotheses (Adequacy and Appropriateness), and comparatively thin on dialogical evidence, co-integrative evidence involving anyone other than teachers, and Partiality-type hypotheses about whose perspective a validity argument represents -- concrete directions for both future primary research and future runs of this pipeline.
+
+At present, this evidence base is substantially Anglophone, even as it draws on national contexts well beyond the United States. Closing that gap -- primarily by enabling the pipeline's CORE.ac.uk integration and by adding sources with stronger native coverage of Spanish- and French-language educational research -- is the clearest next step for both the underlying literature-scanning tool and for future iterations of this review. The pipeline's search vocabulary and relevance gate have also been extended with the TTX model's own terminology (\textit{assessment experience}, \textit{construct-irrelevant}, \textit{examinee experience}, \textit{response process}, among others -- Section~\ref{sec:methodology}), and it now snowballs persistently from \citet{araneda2023dissertation} via Semantic Scholar (Section~\ref{sec:snowball_persistent}) so that future work adopting or critiquing this framework is picked up automatically in later runs.
+
+\bibliographystyle{plainnat}
+\begin{thebibliography}{99}
+
+\bibitem[Amengual-Pizarro and Garc\'ia-Laborda(2017)]{amengual2017views}
+Amengual-Pizarro, M., \& Garc\'ia-Laborda, J. (2017). Analysing test-takers' views on a computer-based speaking test. \textit{Profile: Issues in Teachers' Professional Development}, 19(Sup. 1), 23--38. \url{https://doi.org/10.15446/profile.v19n_sup1.68447}
+
+\bibitem[Amsberry(2018)]{amsberry2018sound}
+Amsberry, P. V. S. (2018). \textit{Testing, testing, 1 2 3: Exploring the mitigating effects of sound on test performance} [OSF preprint]. \url{https://osf.io/dtk9f}
+
+\bibitem[Araneda(2023)]{araneda2023dissertation}
+Araneda Galarce, S. A. (2023). \textit{An experiential approach to test design and validation} [Doctoral dissertation, University of Massachusetts Amherst]. \url{https://doi.org/10.7275/33072110}
+
+\bibitem[Araneda et al.(2025)]{araneda2025ttxmodel}
+Araneda, S., Sireci, S. G., Crespo Cruz, E., \& Mena Serrano, F. (2025). \textit{A conceptual framework for test-taker experience in educational testing} [Preprint, v0]. Caveon / University of Massachusetts Amherst.
+
+\bibitem[Balash et al.(2021)]{balash2021examiners}
+Balash, D. G., Kim, D., Shaibekova, D., Fainchtein, R. A., Sherr, M., \& Aviv, A. J. (2021). Examining the examiners: Students' privacy and security perceptions of online proctoring services. \textit{arXiv preprint arXiv:2106.05917}.
+
+\bibitem[Burstein et al.(2021)]{burstein2021ttxorigin}
+Burstein, J., LaFlair, G. T., Kunnan, A. J., \& von Davier, A. A. (2021). \textit{A theoretical assessment ecosystem for a digital-first assessment -- the Duolingo English Test}. Duolingo Research Report.
+
+\bibitem[Burstein et al.(2024)]{burstein2024responsible}
+Burstein, J., LaFlair, G. T., Yancey, K., von Davier, A. A., \& Dotan, R. (2024). Responsible AI for test equity and quality: The Duolingo English Test as a case study. \textit{arXiv preprint arXiv:2409.07476}.
+
+\bibitem[Dang et al.(2024)]{dang2024vstep}
+Dang, T. T. C., Nguyen, B. T. T., Pham, N. T. H., Nguyen, T. H. H., \& Hoang, G. T. L. (2024). Computer-delivered vs. face-to-face score comparability and test takers' perceptions: The case of the two English speaking proficiency tests for Vietnamese EFL learners. \textit{Language Testing in Asia}, 14(1). \url{https://doi.org/10.1186/s40468-024-00277-1}
+
+\bibitem[Dewey(1938)]{dewey1938}
+Dewey, J. (1938). \textit{Experience and education}. Kappa Delta Pi.
+
+\bibitem[Eleje et al.(2023)]{eleje2023cbtppt}
+Eleje, L. I., Abanobi, C. C., Metu, I. C., Ezeugo, N. C., Agu, N. N., \& Mbelede, N. G. (2023). \textit{Effects of computer-based test (CBT) and paper and pencil test (PPT) on academic achievement and test anxiety of secondary school students' in Economics} [Preprint]. \url{https://doi.org/10.60692/aknv7-eby98}
+
+\bibitem[Feeney(2022)]{feeney2022rejection}
+Feeney, J. (2022). \textit{Test-taker reactions to rejection} [OSF preprint]. \url{https://doi.org/10.17605/OSF.IO/Q9PC3}
+
+\bibitem[Forlizzi and Battarbee(2004)]{forlizzi2004}
+Forlizzi, J., \& Battarbee, K. (2004). Understanding experience in interactive systems. In \textit{Proceedings of the 5th Conference on Designing Interactive Systems} (pp.\ 261--268).
+
+\bibitem[George(2024)]{george2024examstress}
+George, A. S. (2024). Exam season stress and student mental health: An international epidemic. \textit{PU Publications}. \url{https://doi.org/10.5281/zenodo.10826031}
+
+\bibitem[Grand et al.(2013)]{grand2013sensitivity}
+Grand, J. A., Golubovich, J., Ryan, A. M., \& Schmitt, N. (2013). The detection and influence of problematic item content in ability tests: An examination of sensitivity review practices for personnel selection test development. \textit{Organizational Behavior and Human Decision Processes}, 121(2), 158--173. \url{https://doi.org/10.1016/j.obhdp.2013.01.009}
+
+\bibitem[Kaleta(2025)]{kaleta2025studentperspectives}
+Kaleta, J. (2025). \textit{Student perspectives on high-stakes testing (2015--2025): An AI-assisted systematic review of empirical evidence on motivation, learning, and well-being} [OSF study registration]. \url{https://doi.org/10.17605/OSF.IO/QV79W}
+
+\bibitem[Kleinbub and Seitz(2026)]{kleinbub2026socialdesirability}
+Kleinbub, J. D., \& Seitz, T. (2026). When perceptions of social desirability differ: Implications for the multidimensional nominal response model of faking. \textit{Applied Psychological Measurement}. \url{https://doi.org/10.1177/01466216261460893}
+
+\bibitem[Ladant et al.(2023)]{ladant2023saliency}
+Ladant, F.-X., Hedou, J., Sestito, P., \& Bargagli-Stoffi, F. J. (2023). What is essential is visible to the eye: Saliency in primary school ranking and its effect on academic achievements. \textit{arXiv preprint arXiv:2302.10026}.
+
+\bibitem[Lee et al.(2025)]{lee2025forcedchoice}
+Lee, P., Son, M.-K., Zhou, S., Joo, S., Jia, Z., \& Cheng, V. (2025). The journey of forced choice measurement over 80 years: Past, present, and future. \textit{Organizational Research Methods}, 28(4), 680--722. \url{https://doi.org/10.1177/10944281251350687}
+
+\bibitem[Mc Cauley and Mc Namara(2021)]{mccauley2021irish}
+Mc Cauley, V., \& Mc Namara, M. (2021). \textit{Exploring the influence of standardised assessment in the Irish primary school context: Key actor perspectives} [Report]. University of Galway. \url{https://doi.org/10.13025/17312}
+
+\bibitem[Mukherjee et al.(2024)]{mukherjee2024proctoring}
+Mukherjee, S., Distler, V., Lenzini, G., \& Cardoso-Leite, P. (2024). Balancing the perception of cheating detection, privacy and fairness: A mixed-methods study of visual data obfuscation in remote proctoring. \textit{arXiv preprint arXiv:2406.15074}.
+
+\bibitem[Nguyen(2026)]{nguyen2026examiners}
+Nguyen, T. H. P. (2026). Examiners' perceptions of a computer-assisted English language test. \textit{VNU Journal of Foreign Studies}, 42(2S, Special Issue), 145--157. \url{https://doi.org/10.63023/2525-2445/jfs.ulis.5691}
+
+\bibitem[Nakatsuhara et al.(2021)]{nakatsuhara2021videoconferencing}
+Nakatsuhara, F., Inoue, C., Berry, V., \& Galaczi, E. (2021). Video-conferencing speaking tests: Do they measure the same construct as face-to-face tests? \textit{Assessment in Education: Principles, Policy \& Practice}, 28(4), 369--388. \url{https://doi.org/10.1080/0969594X.2021.1951163}
+
+\bibitem[Quaid and Barrett(2021)]{quaid2021fluency}
+Quaid, E., \& Barrett, A. (2021). Interpretations of spoken utterance fluency in simulated and face-to-face oral proficiency interviews. \textit{Language Education \& Assessment}, 4(1), 1--18. \url{https://doi.org/10.29140/lea.v4n1.385}
+
+\bibitem[Reese et al.(2004)]{reese2004teachersperceptions}
+Reese, M., Price, L. R., \& Gordon, S. P. (2004). Teachers' perceptions of high-stakes testing. \textit{Journal of School Leadership}, 14(5), 464--496. \url{https://doi.org/10.1177/105268460401400501}
+
+\bibitem[Steuart(2024)]{steuart2024ruralteachers}
+Steuart, E. L. (2024). \textit{Rural teachers' perceptions of how high-stakes testing impacts high school students} [Thesis/paper]. University of North Carolina at Chapel Hill. \url{https://doi.org/10.17615/wxjv-3a98}
+
+\bibitem[Stierwalt et al.(2000)]{stierwalt2000explanations}
+Stierwalt, S. L., Ryan, A. M., \& Horvath, M. (2000). The influence of explanations for selection test use, outcome favorability, and self-efficacy on test-taker perceptions. \textit{Organizational Behavior and Human Decision Processes}, 83(2), 310--330. \url{https://doi.org/10.1006/obhd.2000.2911}
+
+\bibitem[Stowe et al.(2024)]{stowe2024fairness}
+Stowe, K., Longwill, B., Francis, A., Aoyama, T., Ghosh, D., \& Somasundaran, S. (2024). Identifying fairness issues in automatically generated testing content. \textit{arXiv preprint arXiv:2404.15104}.
+
+\bibitem[Suk and Lyu(2026)]{suk2026unfairness}
+Suk, Y., \& Lyu, W. (2026). Identifying causes of test unfairness: Manipulability and separability. \textit{arXiv preprint arXiv:2601.13449}.
+
+\bibitem[Tseng et al.(2024)]{tseng2024taiwanese}
+Tseng, F.-L., Chao, T.-Y., \& Sung, Y.-T. (2024). High-stakes test anxiety among Taiwanese adolescents: A longitudinal study. \textit{Cogent Education}, 11(1). \url{https://doi.org/10.1080/2331186X.2024.2321019}
+
+\bibitem[Wallace and Tonks(2010)]{wallace2010motivation}
+Wallace, L. E., \& Tonks, S. M. (2010). \textit{Investigating high-stakes testing, motivation, test anxiety, and engagement in children} [PsycEXTRA Dataset]. \url{https://doi.org/10.1037/e639592010-001}
+
+\bibitem[Watson et al.(2026)]{watson2026cat}
+Watson, J., Chen, C.-W., Popov, V., \& Stillwell, D. (2026). \textit{Enhancing test-taker experience in computerised adaptive testing: A comparison of constraint methods for regulating item difficulty jumps} [OSF preprint]. \url{https://osf.io/5svuy}
+
+\bibitem[Weick and Shaughnessy(2024)]{weick2024instruction}
+Weick, N. Z., \& Shaughnessy, M. (2024). Standardized testing and effective instruction: Teacher perceptions on how high stakes testing affects instructional practice. \textit{International Journal of Educational Spectrum}. \url{https://doi.org/10.47806/ijesacademic.1358791}
+
+\bibitem[Zhang et al.(2023)]{zhang2023testtakers}
+Zhang, D., Hoang, T., Pan, S., Hu, Y., Xing, Z., Staples, M., Xu, X., Lu, Q., \& Quigley, A. (2023). Test-takers have a say: Understanding the implications of the use of AI in language tests. \textit{arXiv preprint arXiv:2307.09885}.
+
+\bibitem[Zhang(2024)]{zhangw2024naplan}
+Zhang, W. (2024). \textit{A policy report evaluating the National Assessment Program for Literacy and Numeracy (NAPLAN) reform in Australia: The impacts of high stakes assessment on students}. \textit{arXiv preprint arXiv:2409.17959}.
+
+\bibitem[Zhou et al.(2024)]{zhou2024genderforced}
+Zhou, S., Lee, P., \& Fyffe, S. (2024). Examining gender differences in the use of multidimensional forced-choice measures of personality in terms of test-taker reactions and test fairness. \textit{Human Resource Development Quarterly}, 35(3), 299--325. \url{https://doi.org/10.1002/hrdq.21521}
+
+\end{thebibliography}
+
+\end{document}

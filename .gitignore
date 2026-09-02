@@ -1,0 +1,18 @@
+papers/
+logs/
+seen_papers.db
+results.csv
+__pycache__/
+*.pyc
+
+# secrets -- never commit these
+.env
+.env.*
+*.key
+*credentials*.json
+*secret*
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
