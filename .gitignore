@@ -16,6 +16,8 @@ __pycache__/
 *.aux
 *.log
 *.out
+*.fls
+*.fdb_latexmk
 
 # timestamped backups made before each transitory-paper LLM update / promotion
 transitory_backups/

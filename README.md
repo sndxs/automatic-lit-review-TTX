@@ -99,16 +99,21 @@ Every run that finds new relevant records now does two more things:
 
 1. **Updates `literature_review_transitory.tex`** by sending the current
    draft plus the new papers' title/authors/abstract to the Claude API,
-   asking it to fold them into the bibliography and relevant sections. This
-   is a draft only -- `literature_review_official.tex` is never touched
-   automatically. Review the transitory draft, then run:
+   asking it to fold them into the bibliography and relevant sections, then
+   recompiles `literature_review_transitory.pdf` via `latexmk` (needs a
+   LaTeX installation, e.g. MiKTeX or TeX Live, with `latexmk` on `PATH`; if
+   missing, this step is skipped and logged, the `.tex` update still
+   happens). This is a draft only -- `literature_review_official.tex`/`.pdf`
+   are never touched automatically. Review the transitory draft, then run:
    ```bash
    python promote_transitory.py
    ```
-   to copy it over the official version (the previous official version is
-   archived first in `transitory_backups/`, so this is always reversible).
-   Needs `ANTHROPIC_API_KEY` set (see Setup below); if it's not set, this
-   step is skipped and logged, the rest of the run proceeds normally.
+   to copy it over the official version and recompile the official PDF too
+   (the previous official `.tex` is archived first in
+   `transitory_backups/`, so this is always reversible). Needs
+   `ANTHROPIC_API_KEY` set (see Setup below); if it's not set, the LLM
+   update step is skipped and logged, the rest of the run proceeds
+   normally.
 
 2. **Sends a summary email** (new/downloaded/seen/filtered counts, and the
    list of new papers found) via Gmail SMTP. Needs `GMAIL_ADDRESS`,
@@ -157,6 +162,7 @@ Open [`config.py`](config.py):
 - `storage.py` -- SQLite dedupe index + CSV export.
 - `downloader.py` -- downloads open-access PDFs, skips paywalled/HTML links.
 - `paper_updater.py` -- folds new papers into `literature_review_transitory.tex` via the Claude API.
+- `latex_compiler.py` -- compiles a `.tex` to PDF via `latexmk`, used after transitory updates and promotion.
 - `notifier.py` -- sends the end-of-run summary email.
 - `promote_transitory.py` -- run manually to copy a reviewed transitory draft over the official version.
 - `literature_review_official.tex` -- the manually-validated paper; only changes via `promote_transitory.py`.

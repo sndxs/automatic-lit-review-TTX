@@ -14,6 +14,7 @@ import sys
 from datetime import datetime, timezone
 
 import config
+import latex_compiler
 
 
 def main() -> None:
@@ -29,6 +30,12 @@ def main() -> None:
 
     shutil.copy2(config.TRANSITORY_PAPER_PATH, config.OFFICIAL_PAPER_PATH)
     print(f"Promoted {config.TRANSITORY_PAPER_PATH.name} -> {config.OFFICIAL_PAPER_PATH.name}")
+
+    if latex_compiler.compile_pdf(config.OFFICIAL_PAPER_PATH):
+        print(f"Recompiled {config.OFFICIAL_PAPER_PATH.with_suffix('.pdf').name}")
+    else:
+        print("PDF compilation skipped or failed -- see above; the .tex was still promoted.")
+
     print("This only changed your local files -- git add/commit/push manually if you want it in the repo.")
 
 

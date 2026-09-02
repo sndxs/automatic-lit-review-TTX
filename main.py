@@ -15,6 +15,7 @@ from datetime import datetime
 
 import config
 import downloader
+import latex_compiler
 import notifier
 import paper_updater
 import relevance
@@ -113,6 +114,12 @@ def run() -> None:
             transitory_updated = paper_updater.update_transitory_paper(new_records)
         except Exception:
             log.exception("Unhandled error updating transitory paper -- leaving it unchanged.")
+
+        if transitory_updated:
+            try:
+                latex_compiler.compile_pdf(config.TRANSITORY_PAPER_PATH)
+            except Exception:
+                log.exception("Unhandled error compiling transitory paper PDF.")
 
     try:
         notifier.send_run_summary_email(
