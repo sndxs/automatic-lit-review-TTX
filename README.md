@@ -93,9 +93,9 @@ machine needs to be on for it to fire. To remove it later:
 Unregister-ScheduledTask -TaskName "TTX Lit Reviewer" -Confirm:$false
 ```
 
-## Official vs. transitory paper, and daily email
+## Official vs. transitory paper, daily email, and git sync
 
-Every run that finds new relevant records now does two more things:
+Every run that finds new relevant records now does three more things:
 
 1. **Updates `literature_review_transitory.tex`** by sending the current
    draft plus the new papers' title/authors/abstract to the Claude API,
@@ -120,7 +120,19 @@ Every run that finds new relevant records now does two more things:
    `GMAIL_APP_PASSWORD`, and `NOTIFY_EMAIL_TO` set (see Setup below); if
    any are missing, this step is skipped and logged.
 
-### Setup for these two features
+3. **Commits and pushes any changed tracked files** (`git_sync.py`) --
+   in practice this only ever picks up the transitory `.tex`/`.pdf` from
+   step 1, since everything else that changes on a run
+   (`papers/`, `logs/`, `seen_papers.db`, `results.csv`) is gitignored.
+   If nothing changed (e.g. 0 new records that run), this is a silent
+   no-op. Uses whatever `git` credential helper is already configured on
+   this machine -- nothing extra to set up. `promote_transitory.py` does
+   the same at the end, so promoting also pushes automatically. If a push
+   ever fails (e.g. no network, or the remote has diverged), it's logged
+   and left for you to resolve manually -- the local commit still exists
+   either way.
+
+### Setup for the email and LLM-update features
 
 1. Create a `.env` file in the project root (gitignored -- never commit it)
    with:
@@ -163,6 +175,7 @@ Open [`config.py`](config.py):
 - `downloader.py` -- downloads open-access PDFs, skips paywalled/HTML links.
 - `paper_updater.py` -- folds new papers into `literature_review_transitory.tex` via the Claude API.
 - `latex_compiler.py` -- compiles a `.tex` to PDF via `latexmk`, used after transitory updates and promotion.
+- `git_sync.py` -- commits and pushes any pending changes, used after every run and after promotion.
 - `notifier.py` -- sends the end-of-run summary email.
 - `promote_transitory.py` -- run manually to copy a reviewed transitory draft over the official version.
 - `literature_review_official.tex` -- the manually-validated paper; only changes via `promote_transitory.py`.

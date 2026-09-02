@@ -15,6 +15,7 @@ from datetime import datetime
 
 import config
 import downloader
+import git_sync
 import latex_compiler
 import notifier
 import paper_updater
@@ -127,6 +128,14 @@ def run() -> None:
         )
     except Exception:
         log.exception("Unhandled error sending notification email.")
+
+    try:
+        commit_message = f"Automated run {datetime.now():%Y-%m-%d}: {new_count} new record(s)"
+        if transitory_updated:
+            commit_message += ", transitory paper updated"
+        git_sync.sync(commit_message)
+    except Exception:
+        log.exception("Unhandled error syncing to git.")
 
 
 if __name__ == "__main__":

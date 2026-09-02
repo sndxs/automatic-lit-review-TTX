@@ -14,6 +14,7 @@ import sys
 from datetime import datetime, timezone
 
 import config
+import git_sync
 import latex_compiler
 
 
@@ -36,7 +37,11 @@ def main() -> None:
     else:
         print("PDF compilation skipped or failed -- see above; the .tex was still promoted.")
 
-    print("This only changed your local files -- git add/commit/push manually if you want it in the repo.")
+    commit_message = f"Promote transitory paper to official ({datetime.now():%Y-%m-%d})"
+    if git_sync.sync(commit_message):
+        print("Committed and pushed to the repo.")
+    else:
+        print("Nothing pushed -- see above (either nothing changed, or the push failed and needs a manual look).")
 
 
 if __name__ == "__main__":
