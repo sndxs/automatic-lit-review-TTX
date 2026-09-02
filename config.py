@@ -17,6 +17,10 @@ being kept. Tune RELEVANCE_KEYWORDS to loosen or tighten precision.
 
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()  # pulls GMAIL_*, ANTHROPIC_API_KEY, etc. from a local .env (gitignored) into os.environ
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -200,3 +204,42 @@ SEED_PAPERS = [
 MAX_DOWNLOAD_MB = 50  # skip files larger than this to avoid runaway downloads
 REQUEST_TIMEOUT_SECONDS = 30
 RESULTS_PER_QUERY = 30
+
+# ---------------------------------------------------------------------------
+# Two-track paper: official (manually validated) vs transitory (LLM-updated)
+# ---------------------------------------------------------------------------
+
+# `literature_review_official.tex` only changes when a human runs
+# promote_transitory.py after reviewing the transitory draft -- nothing in
+# this pipeline writes to it automatically.
+OFFICIAL_PAPER_PATH = PROJECT_ROOT / "literature_review_official.tex"
+
+# `literature_review_transitory.tex` is rewritten by paper_updater.py at the
+# end of any run that found new relevant records, folding them in via the
+# Claude API. Treat it as a draft -- review before promoting.
+TRANSITORY_PAPER_PATH = PROJECT_ROOT / "literature_review_transitory.tex"
+
+# A dated copy of the transitory file is saved here before every automated
+# rewrite (and of the official file before every promotion), so a bad LLM
+# update or promotion is always one copy away from undone. Gitignored.
+TRANSITORY_BACKUPS_DIR = PROJECT_ROOT / "transitory_backups"
+
+# Get a key at https://console.anthropic.com/settings/keys and put it in
+# .env as ANTHROPIC_API_KEY (see .env.example) -- never paste a real key
+# here. If unset, the transitory-paper update step is skipped (logged, not
+# fatal) and the rest of the pipeline runs normally.
+ANTHROPIC_API_KEY = ""
+PAPER_UPDATE_MODEL = "claude-sonnet-5"
+PAPER_UPDATE_MAX_TOKENS = 32000
+
+# ---------------------------------------------------------------------------
+# Email notification (sent at the end of every run, new papers or not)
+# ---------------------------------------------------------------------------
+
+# Gmail SMTP with an App Password: https://myaccount.google.com/apppasswords
+# (needs 2-Step Verification enabled on the account first). Put real values
+# in .env (see .env.example) -- never paste a real password here. If any of
+# the three below are unset, the email step is skipped (logged, not fatal).
+GMAIL_ADDRESS = ""
+GMAIL_APP_PASSWORD = ""
+NOTIFY_EMAIL_TO = "sondaxius@gmail.com"

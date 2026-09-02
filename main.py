@@ -15,6 +15,8 @@ from datetime import datetime
 
 import config
 import downloader
+import notifier
+import paper_updater
 import relevance
 import snowball
 import storage
@@ -104,6 +106,20 @@ def run() -> None:
         "Run complete: %d new record(s), %d downloaded, %d already seen, %d filtered as off-topic.",
         new_count, downloaded_count, seen_count, filtered_count,
     )
+
+    transitory_updated = False
+    if new_records:
+        try:
+            transitory_updated = paper_updater.update_transitory_paper(new_records)
+        except Exception:
+            log.exception("Unhandled error updating transitory paper -- leaving it unchanged.")
+
+    try:
+        notifier.send_run_summary_email(
+            new_count, downloaded_count, seen_count, filtered_count, new_records, transitory_updated,
+        )
+    except Exception:
+        log.exception("Unhandled error sending notification email.")
 
 
 if __name__ == "__main__":

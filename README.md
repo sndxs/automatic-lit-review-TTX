@@ -93,6 +93,47 @@ machine needs to be on for it to fire. To remove it later:
 Unregister-ScheduledTask -TaskName "TTX Lit Reviewer" -Confirm:$false
 ```
 
+## Official vs. transitory paper, and daily email
+
+Every run that finds new relevant records now does two more things:
+
+1. **Updates `literature_review_transitory.tex`** by sending the current
+   draft plus the new papers' title/authors/abstract to the Claude API,
+   asking it to fold them into the bibliography and relevant sections. This
+   is a draft only -- `literature_review_official.tex` is never touched
+   automatically. Review the transitory draft, then run:
+   ```bash
+   python promote_transitory.py
+   ```
+   to copy it over the official version (the previous official version is
+   archived first in `transitory_backups/`, so this is always reversible).
+   Needs `ANTHROPIC_API_KEY` set (see Setup below); if it's not set, this
+   step is skipped and logged, the rest of the run proceeds normally.
+
+2. **Sends a summary email** (new/downloaded/seen/filtered counts, and the
+   list of new papers found) via Gmail SMTP. Needs `GMAIL_ADDRESS`,
+   `GMAIL_APP_PASSWORD`, and `NOTIFY_EMAIL_TO` set (see Setup below); if
+   any are missing, this step is skipped and logged.
+
+### Setup for these two features
+
+1. Create a `.env` file in the project root (gitignored -- never commit it)
+   with:
+   ```
+   ANTHROPIC_API_KEY=your-key-here
+   GMAIL_ADDRESS=your-gmail-address
+   GMAIL_APP_PASSWORD=your-app-password
+   NOTIFY_EMAIL_TO=where-to-send-the-summary
+   ```
+   - `ANTHROPIC_API_KEY` -- from https://console.anthropic.com/settings/keys
+   - `GMAIL_ADDRESS` / `GMAIL_APP_PASSWORD` -- enable 2-Step Verification on
+     the Gmail account, then create an App Password at
+     https://myaccount.google.com/apppasswords
+   - `NOTIFY_EMAIL_TO` -- defaults to your own address if left blank in
+     `config.py`, but set it explicitly in `.env` if you want to override it
+2. Re-run `pip install -r requirements.txt` (adds `python-dotenv` and
+   `anthropic`).
+
 ## Editing search terms / precision
 
 Open [`config.py`](config.py):
@@ -115,6 +156,13 @@ Open [`config.py`](config.py):
 - `snowball.py` -- backward/forward citation snowballing + related-papers, via Semantic Scholar.
 - `storage.py` -- SQLite dedupe index + CSV export.
 - `downloader.py` -- downloads open-access PDFs, skips paywalled/HTML links.
+- `paper_updater.py` -- folds new papers into `literature_review_transitory.tex` via the Claude API.
+- `notifier.py` -- sends the end-of-run summary email.
+- `promote_transitory.py` -- run manually to copy a reviewed transitory draft over the official version.
+- `literature_review_official.tex` -- the manually-validated paper; only changes via `promote_transitory.py`.
+- `literature_review_transitory.tex` -- LLM-updated working draft; review before promoting.
+- `.env` -- your local secrets (gitignored) -- see Setup above for the variables it needs.
+- `transitory_backups/` -- timestamped backups made before each transitory rewrite/promotion (gitignored).
 - `papers/` -- downloaded PDFs (gitignored).
 - `logs/` -- one log file per run day (gitignored).
 - `results.csv` -- full index of everything found (gitignored, regenerated each run).

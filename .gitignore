@@ -16,3 +16,6 @@ __pycache__/
 *.aux
 *.log
 *.out
+
+# timestamped backups made before each transitory-paper LLM update / promotion
+transitory_backups/
