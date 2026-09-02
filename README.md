@@ -4,6 +4,12 @@ Scans daily for new literature and reporting on **test-taker experiences**
 in relation to **standardized testing**, across English, Spanish, and
 French, and keeps a local archive.
 
+**[Read the official paper (PDF)](https://sndxs.github.io/automatic-lit-review-TTX/literature_review_official.pdf)**
+-- via GitHub Pages, updated only after manual review (see
+[Official vs. transitory paper](#official-vs-transitory-paper-daily-email-and-git-sync)
+below). The [transitory draft](https://sndxs.github.io/automatic-lit-review-TTX/literature_review_transitory.pdf)
+updates automatically as new papers are found.
+
 ## What it does
 
 - Searches multiple free academic sources per language, requiring (a
