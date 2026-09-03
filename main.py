@@ -50,6 +50,7 @@ def setup_logging() -> None:
 def run() -> None:
     setup_logging()
     log = logging.getLogger("main")
+    errors: list = []
 
     if not SOURCES:
         log.warning("No sources enabled in config.py -- nothing to do.")
@@ -62,34 +63,39 @@ def run() -> None:
     filtered_count = 0
     new_records = []
 
-    for language in config.TOPIC_TERMS:
-        for source_name, module in SOURCES:
-            log.info("Searching %s [%s]", source_name, language)
-            try:
-                records = module.search(language)
-            except Exception:
-                log.exception("Unhandled error searching %s [%s]", source_name, language)
-                continue
-
-            log.info("  -> %d raw result(s)", len(records))
-            for record in records:
-                if not relevance.is_relevant(record.title, record.description):
-                    filtered_count += 1
+    try:
+        for language in config.TOPIC_TERMS:
+            for source_name, module in SOURCES:
+                log.info("Searching %s [%s]", source_name, language)
+                try:
+                    records = module.search(language)
+                except Exception as e:
+                    log.exception("Unhandled error searching %s [%s]", source_name, language)
+                    errors.append(f"search {source_name} [{language}]: {e}")
                     continue
 
-                if storage.is_seen(conn, record.uid):
-                    seen_count += 1
-                    continue
+                log.info("  -> %d raw result(s)", len(records))
+                for record in records:
+                    if not relevance.is_relevant(record.title, record.description):
+                        filtered_count += 1
+                        continue
 
-                if record.pdf_url:
-                    saved_path = downloader.download(record.uid, record.title, record.pdf_url)
-                    if saved_path:
-                        record.downloaded_path = saved_path
-                        downloaded_count += 1
+                    if storage.is_seen(conn, record.uid):
+                        seen_count += 1
+                        continue
 
-                storage.save_record(conn, record)
-                new_count += 1
-                new_records.append(record)
+                    if record.pdf_url:
+                        saved_path = downloader.download(record.uid, record.title, record.pdf_url)
+                        if saved_path:
+                            record.downloaded_path = saved_path
+                            downloaded_count += 1
+
+                    storage.save_record(conn, record)
+                    new_count += 1
+                    new_records.append(record)
+    except Exception as e:
+        log.exception("Unhandled error in the main search loop -- proceeding with whatever was found so far.")
+        errors.append(f"main search loop aborted early: {e}")
 
     if config.ENABLE_SNOWBALL:
         try:
@@ -98,8 +104,9 @@ def run() -> None:
             downloaded_count += snowball_stats.downloaded_count
             seen_count += snowball_stats.seen_count
             filtered_count += snowball_stats.filtered_count
-        except Exception:
+        except Exception as e:
             log.exception("Unhandled error during snowballing -- keeping results found so far.")
+            errors.append(f"snowballing: {e}")
 
     storage.export_csv(conn)
     conn.close()
@@ -109,34 +116,46 @@ def run() -> None:
         new_count, downloaded_count, seen_count, filtered_count,
     )
 
-    transitory_updated = False
+    patch_result = None
     if new_records:
         try:
-            transitory_updated = paper_updater.update_transitory_paper(new_records)
-        except Exception:
+            patch_result = paper_updater.update_transitory_paper(new_records)
+        except Exception as e:
             log.exception("Unhandled error updating transitory paper -- leaving it unchanged.")
+            errors.append(f"transitory paper update: {e}")
 
-        if transitory_updated:
+        if patch_result:
             try:
                 latex_compiler.compile_pdf(config.TRANSITORY_PAPER_PATH)
-            except Exception:
+            except Exception as e:
                 log.exception("Unhandled error compiling transitory paper PDF.")
+                errors.append(f"PDF compilation: {e}")
 
     try:
         notifier.send_run_summary_email(
-            new_count, downloaded_count, seen_count, filtered_count, new_records, transitory_updated,
+            new_count, downloaded_count, seen_count, filtered_count, new_records, patch_result, errors,
         )
     except Exception:
         log.exception("Unhandled error sending notification email.")
 
     try:
         commit_message = f"Automated run {datetime.now():%Y-%m-%d}: {new_count} new record(s)"
-        if transitory_updated:
-            commit_message += ", transitory paper updated"
+        if patch_result:
+            commit_message += f", transitory paper patched ({patch_result.applied_count} paper(s))"
         git_sync.sync(commit_message)
-    except Exception:
+    except Exception as e:
         log.exception("Unhandled error syncing to git.")
+        errors.append(f"git sync: {e}")
 
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except Exception as e:
+        logging.getLogger("main").exception("FATAL: run() crashed before completing.")
+        try:
+            import traceback
+            notifier.send_error_email("main.run() crashed", traceback.format_exc())
+        except Exception:
+            logging.getLogger("main").exception("Also failed to send the crash alert email.")
+        raise

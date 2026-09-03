@@ -230,7 +230,34 @@ TRANSITORY_BACKUPS_DIR = PROJECT_ROOT / "transitory_backups"
 # fatal) and the rest of the pipeline runs normally.
 ANTHROPIC_API_KEY = ""
 PAPER_UPDATE_MODEL = "claude-sonnet-5"
-PAPER_UPDATE_MAX_TOKENS = 32000
+# paper_updater.py asks the model for a small JSON patch (new bibliography
+# entries + at most one citing sentence per new paper) rather than the
+# whole document, so this only needs to cover a handful of short JSON
+# objects -- a few hundred tokens each, regardless of how large the paper
+# itself grows. (An earlier full-document-rewrite design hit even the
+# model's own 64000-token ceiling once the paper passed ~39k tokens; this
+# patch-based design doesn't have that failure mode.)
+PAPER_UPDATE_MAX_TOKENS = 8000
+
+# Subsection titles paper_updater.py may cite a new paper near -- each must
+# match a \subsection{...} title in literature_review_transitory.tex
+# exactly (excludes table/mapping subsections, which aren't good targets
+# for an appended sentence). Update this list if the paper's thematic
+# subsection structure changes.
+PAPER_UPDATE_ANCHOR_SECTIONS = [
+    "Psychological and Emotional Dimensions of Test-Taking",
+    "Perceptions of Fairness and Reactions to Outcomes",
+    "Mode of Delivery: Paper, Computer, Video, and AI-Mediated Testing",
+    "Surveillance, Privacy, and Integrity in Remote Testing",
+    "Teacher and Institutional Perspectives on the Student Testing Experience",
+    "Systemic and Policy-Level Consequences",
+    "Test-Taker Response Behavior and Self-Presentation",
+    "Teacher and Institutional Perspectives",
+    "Psychological and Physiological Stress Responses",
+    "Fairness, Equity, and Systemic Consequences",
+    "Direct Evidence of Student Experience",
+    "Response Processes and Test-Taking Strategies (Spanish-Language Literature)",
+]
 
 # ---------------------------------------------------------------------------
 # Email notification (sent at the end of every run, new papers or not)

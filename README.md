@@ -103,28 +103,51 @@ Unregister-ScheduledTask -TaskName "TTX Lit Reviewer" -Confirm:$false
 
 Every run that finds new relevant records now does three more things:
 
-1. **Updates `literature_review_transitory.tex`** by sending the current
-   draft plus the new papers' title/authors/abstract to the Claude API,
-   asking it to fold them into the bibliography and relevant sections, then
-   recompiles `literature_review_transitory.pdf` via `latexmk` (needs a
-   LaTeX installation, e.g. MiKTeX or TeX Live, with `latexmk` on `PATH`; if
-   missing, this step is skipped and logged, the `.tex` update still
-   happens). This is a draft only -- `literature_review_official.tex`/`.pdf`
-   are never touched automatically. Review the transitory draft, then run:
+1. **Patches `literature_review_transitory.tex`** (`paper_updater.py`) by
+   sending the new papers' title/authors/abstract, plus a list of the
+   paper's existing thematic subsections, to the Claude API and asking for
+   a small JSON patch: new bibliography entries, and for each new paper
+   either a best-fit existing subsection with a one-sentence provisional
+   mention, or "no good fit." Python applies this as plain string
+   insertion -- the model never rewrites the document itself. (An earlier
+   version asked the model to regenerate the whole ~100KB document every
+   run; that reliably failed once the paper grew past ~39k tokens, even at
+   the model's own 64000-token output ceiling -- see git history. The
+   patch is a few hundred tokens regardless of how large the paper gets, so
+   that failure mode doesn't apply here.) Every new paper, whether or not
+   it found a subsection match, is also added to the "Automatically Found
+   Candidates Pending Full Review" list near the top of the paper --
+   nothing is silently dropped. Numeric totals (corpus counts, the PRISMA
+   figure) are deliberately **not** touched by this step: those describe a
+   specific, human-screened snapshot, and bumping them for papers nobody's
+   read yet would misrepresent what's actually been screened.
+
+   `literature_review_transitory.pdf` is then recompiled via `latexmk`
+   (needs a LaTeX installation, e.g. MiKTeX or TeX Live, with `latexmk` on
+   `PATH`; if missing, this step is skipped and logged, the `.tex` patch
+   still happens). This is a draft only -- `literature_review_official.tex`/`.pdf`
+   are never touched automatically. Review the transitory draft (the diff
+   and a summary of what changed are in the notification email below, PDF
+   attached), then run:
    ```bash
    python promote_transitory.py
    ```
    to copy it over the official version and recompile the official PDF too
    (the previous official `.tex` is archived first in
    `transitory_backups/`, so this is always reversible). Needs
-   `ANTHROPIC_API_KEY` set (see Setup below); if it's not set, the LLM
-   update step is skipped and logged, the rest of the run proceeds
-   normally.
+   `ANTHROPIC_API_KEY` set (see Setup below); if it's not set, this step is
+   skipped and logged, the rest of the run proceeds normally.
 
-2. **Sends a summary email** (new/downloaded/seen/filtered counts, and the
-   list of new papers found) via Gmail SMTP. Needs `GMAIL_ADDRESS`,
-   `GMAIL_APP_PASSWORD`, and `NOTIFY_EMAIL_TO` set (see Setup below); if
-   any are missing, this step is skipped and logged.
+2. **Sends a summary email** (new/downloaded/seen/filtered counts, a
+   summary of what the patch step did, and the list of new papers found)
+   via Gmail SMTP, with the updated transitory PDF attached whenever it
+   changed. Needs `GMAIL_ADDRESS`, `GMAIL_APP_PASSWORD`, and
+   `NOTIFY_EMAIL_TO` set (see Setup below); if any are missing, this step
+   is skipped and logged. If any step in a run raised an error, the email
+   subject is prefixed `[N error(s)]` and the errors are listed in the
+   body, so a failure is never silent -- and if the whole run crashes
+   before reaching this point, a separate, self-contained crash alert
+   email still goes out (`notifier.send_error_email`).
 
 3. **Commits and pushes any changed tracked files** (`git_sync.py`) --
    in practice this only ever picks up the transitory `.tex`/`.pdf` from
