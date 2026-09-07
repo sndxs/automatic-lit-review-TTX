@@ -180,6 +180,40 @@ Every run that finds new relevant records now does three more things:
 2. Re-run `pip install -r requirements.txt` (adds `python-dotenv` and
    `anthropic`).
 
+## Deep-dive news search (`deep_dive_news.py`)
+
+A separate, manually-run tool for a slower, broader sweep for
+test-taker-experience news than the daily run's GDELT query provides --
+**not** part of the scheduled task. For each of ~190 countries,
+alphabetically:
+
+1. Gets (or translates, once per language, then caches) the topic/
+   experience search terms into that country's dominant language, via the
+   Claude API.
+2. Queries GDELT's DOC 2.0 API for candidate articles from that country's
+   press, in that language.
+3. Fetches the full text of the top candidates and sends them all in one
+   Claude API call per country, asking it to judge genuine relevance and
+   translate/summarize anything relevant into English.
+4. Appends findings to `deep_dive_news/findings.csv` and checkpoints
+   progress in `deep_dive_news/progress.json` (gitignored -- this is raw
+   research data, not part of the paper) so a long sweep can be stopped and
+   resumed later without re-covering ground already done.
+
+```bash
+python deep_dive_news.py                  # resume where it left off
+python deep_dive_news.py --limit 20        # do at most 20 countries this run
+python deep_dive_news.py --reset           # clear progress, start over from A
+python deep_dive_news.py --max-candidates 8   # more/fewer articles read per country
+```
+
+Needs `ANTHROPIC_API_KEY` set (same `.env` as above). Cost/time note: one
+Claude call per unique language (cached across countries that share it)
+plus up to one call per country with candidates -- a full sweep is roughly
+150-250 calls, plus GDELT's 5-second-per-request courtesy throttle even on
+countries with zero results, so a full run takes a while. Use `--limit` to
+run it in bounded chunks over multiple sessions.
+
 ## Editing search terms / precision
 
 Open [`config.py`](config.py):
@@ -207,6 +241,8 @@ Open [`config.py`](config.py):
 - `git_sync.py` -- commits and pushes any pending changes, used after every run and after promotion.
 - `notifier.py` -- sends the end-of-run summary email.
 - `promote_transitory.py` -- run manually to copy a reviewed transitory draft over the official version.
+- `deep_dive_news.py` -- manually-run, country-by-country deep dive for news coverage (not part of the daily task); see above.
+- `deep_dive_news/` -- output of the above: `findings.csv` and `progress.json` (gitignored).
 - `literature_review_official.tex` -- the manually-validated paper; only changes via `promote_transitory.py`.
 - `literature_review_transitory.tex` -- LLM-updated working draft; review before promoting.
 - `.env` -- your local secrets (gitignored) -- see Setup above for the variables it needs.

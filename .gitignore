@@ -2,6 +2,7 @@ papers/
 logs/
 seen_papers.db
 results.csv
+deep_dive_news/
 __pycache__/
 *.pyc
 
