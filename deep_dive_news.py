@@ -56,6 +56,8 @@ import anthropic
 import requests
 
 import config
+import latex_compiler
+from latex_utils import escape_latex
 from sources.gdelt import _TOPIC_TERMS as GDELT_TOPIC_TERMS, _EXPERIENCE_TERMS as GDELT_EXPERIENCE_TERMS
 
 log = logging.getLogger("deep_dive_news")
@@ -63,6 +65,7 @@ log = logging.getLogger("deep_dive_news")
 OUTPUT_DIR = config.PROJECT_ROOT / "deep_dive_news"
 DB_PATH = OUTPUT_DIR / "candidates.db"
 FINDINGS_CSV = OUTPUT_DIR / "findings.csv"
+REPORT_TEX_PATH = config.PROJECT_ROOT / "deep_dive_report.tex"
 
 GDELT_API_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 GDELT_MIN_REQUEST_INTERVAL_SECONDS = 5
@@ -620,6 +623,273 @@ def analyze(batch_size: int, candidates_per_call: int) -> None:
     conn.close()
 
 
+# ---------------------------------------------------------------------------
+# Report generation
+# ---------------------------------------------------------------------------
+#
+# Only the genuinely creative part -- spotting themes that recur across
+# multiple countries -- goes through an LLM call, and its output is small
+# (one short entry per theme, not one per finding) regardless of how many
+# findings exist. Everything else (bibliography, per-country findings list,
+# document skeleton) is built directly from the structured DB rows in
+# Python. An earlier version of paper_updater.py asked a model to
+# regenerate an entire ~100KB document on every update and that reliably
+# failed once it grew past ~39k tokens (see git history) -- this design
+# doesn't reproduce that mistake: nothing here asks the model to reproduce
+# data it was just given.
+
+REPORT_DOC_TEMPLATE = r"""\documentclass[11pt]{{article}}
+\usepackage[utf8]{{inputenc}}
+\usepackage[T1]{{fontenc}}
+\usepackage[margin=1in]{{geometry}}
+\usepackage{{hyperref}}
+\usepackage{{natbib}}
+\usepackage{{parskip}}
+
+\hypersetup{{
+    colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue,
+    pdftitle={{Deep-Dive News Search: Test-Taker Experience Across Countries}},
+    pdfauthor={{Sergio Araneda}}
+}}
+
+\title{{Deep-Dive News Search: Test-Taker Experience Across Countries\thanks{{This is an automatically machine-generated summary, produced by \texttt{{deep\_dive\_news.py}} from an automated, country-by-country news search. Findings here are leads to verify, not verified facts -- read the source before citing anything from this document elsewhere.}}}}
+\author{{Sergio Araneda \\ Caveon \\ Correspondence: \texttt{{sondaxius@gmail.com}}}}
+\date{{\today}}
+
+\begin{{document}}
+\maketitle
+
+\section{{Methodology}}
+
+This report summarizes findings from an automated, country-by-country news search (\texttt{{deep\_dive\_news.py}}), separate from this project's main academic literature pipeline. For each country, search terms are translated into that country's dominant language via the Claude API, GDELT's DOC~2.0 API is queried for candidate articles from that country's press, and candidates are fetched and screened for genuine relevance (not generic use of the word ``test'') by the same model, which also translates and summarizes anything relevant into English. As of this report, {country_count} of {total_countries} countries have been searched (harvested), {analyzed_count} candidate articles have been read and judged, and \textbf{{{finding_count} were found genuinely relevant}}, spanning {distinct_country_count} countries.
+
+\section{{Cross-Country Themes}}
+
+{themes_section}
+
+\section{{Findings by Country}}
+
+{findings_section}
+
+\bibliographystyle{{plainnat}}
+\begin{{thebibliography}}{{99}}
+
+{bibliography}
+
+\end{{thebibliography}}
+
+\end{{document}}
+"""
+
+THEMES_PROMPT_TEMPLATE = """Below is a list of news findings about standardized testing / test-taker experience, from an automated multi-country search. Each has a citation key, country, and English summary.
+
+Identify THEMES that genuinely recur across TWO OR MORE DIFFERENT COUNTRIES -- e.g. AI-proctoring concerns, exam-related student mental health, testing-policy reform debates, equity/fairness disputes, teacher/parent backlash, etc. Do not force a connection between findings that aren't really thematically related, and it is completely fine to return an empty array if nothing genuinely recurs across countries yet.
+
+Respond with ONLY a JSON array, each object shaped exactly like this:
+{{"theme": "short theme name", "description": "2-4 sentence description of the pattern across these countries", "keys": ["citation_key1", "citation_key2", ...]}}
+
+`keys` must be copied EXACTLY from the list below (do not invent or alter them), and only include a key if that specific finding genuinely exemplifies the theme -- a theme needs keys from at least 2 different countries to qualify.
+
+=== FINDINGS ({count}) ===
+{findings_block}
+
+Output ONLY the JSON array. No commentary, no markdown code fences.
+"""
+
+
+def _make_citation_key(domain: str, date_published: str, idx: int) -> str:
+    base = re.sub(r"[^a-z0-9]", "", (domain or "source").lower())[:20] or "source"
+    year_match = re.match(r"^\d{4}", date_published or "")
+    year = year_match.group(0) if year_match else "nd"
+    return f"{base}{year}n{idx}"
+
+
+def _get_relevant_findings(conn: sqlite3.Connection) -> list:
+    rows = conn.execute(
+        "SELECT uid, country, original_language, original_title, english_summary, domain, date_published, url "
+        "FROM candidates WHERE relevant = 1 ORDER BY country, date_published"
+    ).fetchall()
+    findings = []
+    for i, (uid, country, language, title, summary, domain, date_published, url) in enumerate(rows):
+        findings.append({
+            "uid": uid, "country": country, "language": language,
+            "original_title": title, "english_summary": summary,
+            "domain": domain, "date_published": date_published, "url": url,
+            "key": _make_citation_key(domain, date_published, i),
+        })
+    return findings
+
+
+def _build_bibliography(findings: list) -> str:
+    entries = []
+    for f in findings:
+        year_match = re.match(r"^\d{4}", f["date_published"] or "")
+        year = year_match.group(0) if year_match else "n.d."
+        domain = escape_latex(f["domain"] or "unknown source")
+        title = escape_latex(f["original_title"] or "(untitled)")
+        entries.append(
+            f"\\bibitem[{domain}({year})]{{{f['key']}}}\n"
+            f"{domain}. ({year}). {title}. \\url{{{f['url']}}}"
+        )
+    return "\n\n".join(entries) if entries else "% no relevant findings yet"
+
+
+def _build_findings_by_country(findings: list) -> str:
+    if not findings:
+        return "No relevant findings yet -- run \\texttt{analyze} after harvesting to populate this section."
+    by_country: dict = {}
+    for f in findings:
+        by_country.setdefault(f["country"], []).append(f)
+    blocks = []
+    for country in sorted(by_country):
+        blocks.append(f"\\subsection{{{escape_latex(country)}}}")
+        for f in by_country[country]:
+            title = escape_latex(f["original_title"] or "(untitled)")
+            summary = escape_latex(f["english_summary"] or "")
+            lang = escape_latex(f["language"] or "unknown language")
+            blocks.append(f"\\textbf{{{title}}} \\citep{{{f['key']}}} ({lang}). {summary}")
+    return "\n\n".join(blocks)
+
+
+def _generate_themes(client: anthropic.Anthropic, findings: list) -> list:
+    if len(findings) < 2:
+        return []
+    blocks = [
+        f"- key: {f['key']} | country: {f['country']} | summary: {f['english_summary']}"
+        for f in findings
+    ]
+    prompt = THEMES_PROMPT_TEMPLATE.format(count=len(findings), findings_block="\n".join(blocks))
+    try:
+        response = client.messages.create(
+            model=config.PAPER_UPDATE_MODEL, max_tokens=4000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = "".join(b.text for b in response.content if b.type == "text")
+        start, end = text.find("["), text.rfind("]")
+        themes = json.loads(text[start:end + 1])
+    except Exception:
+        log.exception("Failed to generate cross-country themes -- report will note none identified yet.")
+        return []
+
+    valid_keys = {f["key"] for f in findings}
+    for t in themes:
+        t["keys"] = [k for k in t.get("keys", []) if k in valid_keys]
+    return [t for t in themes if len(t["keys"]) >= 1]
+
+
+def _build_themes_section(themes: list) -> str:
+    if not themes:
+        return "No themes recurring across two or more countries have been identified yet -- check back as more findings accumulate."
+    blocks = []
+    for t in themes:
+        keys = ", ".join(t.get("keys", []))
+        blocks.append(
+            f"\\subsection{{{escape_latex(t.get('theme', ''))}}}\n"
+            f"{escape_latex(t.get('description', ''))} (see \\citep{{{keys}}})."
+        )
+    return "\n\n".join(blocks)
+
+
+def report() -> None:
+    setup_logging("report")
+    conn = _get_connection()
+    findings = _get_relevant_findings(conn)
+    country_count = conn.execute("SELECT COUNT(*) FROM harvested_countries").fetchone()[0]
+    analyzed_count = conn.execute("SELECT COUNT(*) FROM candidates WHERE analyzed = 1").fetchone()[0]
+    distinct_countries = len({f["country"] for f in findings})
+    conn.close()
+
+    log.info("Generating report from %d relevant finding(s) across %d countries.", len(findings), distinct_countries)
+
+    client = None
+    themes = []
+    if findings:
+        try:
+            client = _get_client()
+            themes = _generate_themes(client, findings)
+        except Exception:
+            log.exception("Could not generate themes (e.g. missing API key) -- report will note none identified.")
+
+    doc = REPORT_DOC_TEMPLATE.format(
+        country_count=country_count,
+        total_countries=len(COUNTRIES),
+        analyzed_count=analyzed_count,
+        finding_count=len(findings),
+        distinct_country_count=distinct_countries,
+        themes_section=_build_themes_section(themes),
+        findings_section=_build_findings_by_country(findings),
+        bibliography=_build_bibliography(findings),
+    )
+
+    if not doc.strip().startswith("\\documentclass") or "\\end{document}" not in doc:
+        log.error("Assembled report doesn't look like valid LaTeX -- not writing it. This should not happen since the skeleton is fixed; check for a bad character in a finding's title/summary.")
+        return
+
+    REPORT_TEX_PATH.write_text(doc, encoding="utf-8")
+    log.info("Wrote %s", REPORT_TEX_PATH.name)
+
+    if latex_compiler.compile_pdf(REPORT_TEX_PATH):
+        log.info("Compiled %s", REPORT_TEX_PATH.with_suffix(".pdf").name)
+    else:
+        log.warning("PDF compilation skipped or failed -- see above; the .tex was still written.")
+
+
+# ---------------------------------------------------------------------------
+# Overnight orchestrator: alternate harvest/analyze rounds for a time budget
+# ---------------------------------------------------------------------------
+
+def auto(hours: float, harvest_chunk: int, analyze_batch: int, candidates_per_call: int, max_candidates: int) -> None:
+    setup_logging("auto")
+    _get_client()  # fail fast here if the API key is missing, before looping
+
+    deadline = time.time() + hours * 3600
+    round_num = 0
+    log.info("Starting overnight auto run: budget %.1f hour(s), ending around %s.",
+              hours, datetime.fromtimestamp(deadline).strftime("%Y-%m-%d %H:%M"))
+
+    while time.time() < deadline:
+        round_num += 1
+        conn = _get_connection()
+        harvested_count = conn.execute("SELECT COUNT(*) FROM harvested_countries").fetchone()[0]
+        unanalyzed_count = conn.execute("SELECT COUNT(*) FROM candidates WHERE analyzed = 0").fetchone()[0]
+        conn.close()
+
+        harvest_done = harvested_count >= len(COUNTRIES)
+        if harvest_done and unanalyzed_count == 0:
+            log.info("Auto: harvest complete and analyze pool drained -- nothing left to do, stopping early.")
+            break
+
+        log.info("=== Auto round %d (harvested %d/%d countries, %d unanalyzed candidates, %.0f min remaining) ===",
+                  round_num, harvested_count, len(COUNTRIES), unanalyzed_count, (deadline - time.time()) / 60)
+
+        if not harvest_done:
+            try:
+                harvest(limit=harvest_chunk, max_candidates=max_candidates, reset=False)
+            except Exception:
+                log.exception("Auto: harvest round failed, moving on to analyze anyway.")
+
+        if time.time() >= deadline:
+            break
+
+        conn = _get_connection()
+        unanalyzed_count = conn.execute("SELECT COUNT(*) FROM candidates WHERE analyzed = 0").fetchone()[0]
+        conn.close()
+
+        if unanalyzed_count:
+            try:
+                analyze(batch_size=min(analyze_batch, unanalyzed_count), candidates_per_call=candidates_per_call)
+            except Exception:
+                log.exception("Auto: analyze round failed, moving on to next round.")
+        else:
+            log.info("Auto: no unanalyzed candidates yet this round -- skipping analyze.")
+
+    log.info("Auto run finished (time budget reached or nothing left to do). Generating final report.")
+    try:
+        report()
+    except Exception:
+        log.exception("Auto: final report generation failed -- findings/candidates.db are still intact, run `report` manually.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -638,8 +908,24 @@ if __name__ == "__main__":
     p_analyze.add_argument("--candidates-per-call", type=int, default=DEFAULT_CANDIDATES_PER_CALL,
                             help="How many candidates to bundle into each Claude call (default %(default)s).")
 
+    sub.add_parser("report", help="Regenerate deep_dive_report.tex/.pdf from findings currently in the pool.")
+
+    p_auto = sub.add_parser("auto", help="Alternate harvest/analyze rounds for a time budget (e.g. overnight), then generate the report.")
+    p_auto.add_argument("--hours", type=float, default=7.0, help="Stop after roughly this many hours (default %(default)s).")
+    p_auto.add_argument("--harvest-chunk", type=int, default=15, help="Countries harvested per round (default %(default)s).")
+    p_auto.add_argument("--analyze-batch", type=int, default=DEFAULT_ANALYZE_BATCH_SIZE, help="Candidates analyzed per round (default %(default)s).")
+    p_auto.add_argument("--candidates-per-call", type=int, default=DEFAULT_CANDIDATES_PER_CALL, help="Candidates bundled per Claude call during analyze rounds (default %(default)s).")
+    p_auto.add_argument("--max-candidates", type=int, default=DEFAULT_MAX_CANDIDATES_PER_COUNTRY, help="Max GDELT candidates pulled per country during harvest rounds (default %(default)s).")
+
     args = parser.parse_args()
     if args.command == "harvest":
         harvest(limit=args.limit, max_candidates=args.max_candidates, reset=args.reset)
     elif args.command == "analyze":
         analyze(batch_size=args.batch_size, candidates_per_call=args.candidates_per_call)
+    elif args.command == "report":
+        report()
+    elif args.command == "auto":
+        auto(
+            hours=args.hours, harvest_chunk=args.harvest_chunk, analyze_batch=args.analyze_batch,
+            candidates_per_call=args.candidates_per_call, max_candidates=args.max_candidates,
+        )

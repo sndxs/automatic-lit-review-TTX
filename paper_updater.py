@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 import anthropic
 
 import config
+from latex_utils import escape_latex, markdown_to_latex_italics
 
 log = logging.getLogger("paper_updater")
 
@@ -95,32 +96,6 @@ def _existing_bibitem_keys(tex: str) -> set:
     return set(re.findall(r"\\bibitem(?:\[[^\]]*\])?\{([^}]+)\}", tex))
 
 
-_LATEX_ESCAPES = {
-    "\\": r"\textbackslash{}",
-    "&": r"\&",
-    "%": r"\%",
-    "$": r"\$",
-    "#": r"\#",
-    "_": r"\_",
-    "{": r"\{",
-    "}": r"\}",
-    "~": r"\textasciitilde{}",
-    "^": r"\textasciicircum{}",
-}
-
-
-def _escape_latex(text: str) -> str:
-    """Escape LaTeX special characters in text that didn't come from the model
-    (e.g. a raw record title inserted directly by this module)."""
-    return "".join(_LATEX_ESCAPES.get(ch, ch) for ch in text)
-
-
-def _markdown_to_latex_italics(text: str) -> str:
-    """Defensive cleanup: the model is instructed to output LaTeX, not
-    Markdown, but occasionally emits *word* for italics anyway."""
-    return re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"\\textit{\1}", text)
-
-
 def _unique_key(proposed: str, taken: set) -> str:
     key = proposed
     suffix = ord("b")
@@ -132,7 +107,7 @@ def _unique_key(proposed: str, taken: set) -> str:
 
 def _insert_bibliography_entries(tex: str, items: list) -> str:
     entries = "\n\n".join(
-        f"\\bibitem[{item['bibitem_label']}]{{{item['bibitem_key']}}}\n{_markdown_to_latex_italics(item['bibitem_body'])}"
+        f"\\bibitem[{item['bibitem_label']}]{{{item['bibitem_key']}}}\n{markdown_to_latex_italics(item['bibitem_body'])}"
         for item in items
     )
     marker = "\\end{thebibliography}"
@@ -155,7 +130,7 @@ def _insert_section_blurb(tex: str, anchor_title: str, blurb: str) -> tuple:
     candidates = [p for p in (next_subsection, next_section) if p != -1]
     boundary = min(candidates) if candidates else len(tex)
 
-    insertion = "\n\n" + _markdown_to_latex_italics(blurb.strip()) + "\n\n"
+    insertion = "\n\n" + markdown_to_latex_italics(blurb.strip()) + "\n\n"
     return tex[:boundary] + insertion + tex[boundary:], True
 
 
@@ -175,8 +150,8 @@ def _insert_pending_list_items(tex: str, items: list, records_by_uid: dict) -> s
     lines = []
     for item in items:
         record = records_by_uid.get(item["uid"])
-        title = _escape_latex(record.title) if record else "(untitled)"
-        source = _escape_latex(f"{record.source} [{record.language}]") if record else "unknown source"
+        title = escape_latex(record.title) if record else "(untitled)"
+        source = escape_latex(f"{record.source} [{record.language}]") if record else "unknown source"
         note = ""
         if item.get("anchor_section"):
             note = f" Cited provisionally in the ``{item['anchor_section']}'' subsection."
