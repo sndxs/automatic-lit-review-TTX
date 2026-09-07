@@ -5,41 +5,52 @@ pipeline (main.py). Use it when you want a broader, slower sweep for
 test-taker-experience news coverage than the daily run's GDELT query
 provides, including non-English-language coverage.
 
-For each country in COUNTRIES (alphabetical), it:
-  1. Gets (or translates, once per language, then caches) the topic/
-     experience search terms into that country's dominant language, via
-     the Claude API.
-  2. Queries GDELT's DOC 2.0 API (free, no key) for candidate articles from
-     that country's press, in that language.
-  3. Fetches the full text of the top candidates and sends them ALL in one
-     Claude API call per country, asking it to judge genuine relevance and,
-     for anything relevant, produce an English translation/summary.
-  4. Appends relevant findings to deep_dive_news/findings.csv and records
-     the country as done in deep_dive_news/progress.json, so a long sweep
-     can be stopped and resumed later without re-covering ground.
+Two separate phases, so collecting raw candidates (cheap: GDELT + one
+translation call per language, cached) is decoupled from spending Claude
+calls on judging/translating them:
+
+  harvest   For each country (alphabetical) not yet harvested, translates
+            the search terms into that country's dominant language
+            (cached per language), queries GDELT's DOC 2.0 API for
+            candidate articles from that country's press, and stores them
+            in deep_dive_news/candidates.db. No article fetching, no
+            relevance-judging Claude calls here.
+
+  analyze   Weighted-randomly samples a batch of not-yet-analyzed
+            candidates from the pool -- weighted toward countries with
+            fewer already-analyzed candidates, so repeated `analyze` runs
+            spread coverage across countries rather than exhausting
+            whichever country was harvested first. Fetches each sampled
+            candidate's full text, bundles a few per Claude call, and asks
+            it to judge genuine relevance and translate/summarize anything
+            relevant into English. Relevant findings are appended to
+            deep_dive_news/findings.csv.
 
 Usage:
-    python deep_dive_news.py                  # resume, no country limit
-    python deep_dive_news.py --limit 20        # do at most 20 countries this run
-    python deep_dive_news.py --reset           # clear progress, start over from A
-    python deep_dive_news.py --max-candidates 8
+    python deep_dive_news.py harvest                    # resume, all remaining countries
+    python deep_dive_news.py harvest --limit 30          # only 30 more countries this run
+    python deep_dive_news.py harvest --reset             # re-harvest every country (kept candidates aren't lost)
+    python deep_dive_news.py analyze                     # analyze a batch (default 20) sampled from the pool
+    python deep_dive_news.py analyze --batch-size 50
 
-Cost/time note: this makes one Claude API call per unique language (cached)
-plus up to one Claude API call per country that has candidates -- a full
-~190-country sweep is on the order of 150-250 calls total, plus GDELT's
-5-second-per-request courtesy throttle, so expect this to take a while.
-Use --limit to run it in bounded chunks.
+Cost/time note: harvesting all ~190 countries costs one Claude call per
+unique language (cached, ~40-60 total) plus GDELT's 5-second-per-request
+courtesy throttle even on zero-result countries (so a full harvest takes
+15-30+ min regardless of findings). Analyzing costs roughly
+batch_size / candidates_per_call Claude calls. Use --limit / --batch-size
+to run either phase in bounded chunks across multiple sessions.
 """
 
 import argparse
 import json
 import logging
 import os
+import random
 import re
+import sqlite3
 import sys
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 
 import anthropic
 import requests
@@ -50,18 +61,44 @@ from sources.gdelt import _TOPIC_TERMS as GDELT_TOPIC_TERMS, _EXPERIENCE_TERMS a
 log = logging.getLogger("deep_dive_news")
 
 OUTPUT_DIR = config.PROJECT_ROOT / "deep_dive_news"
+DB_PATH = OUTPUT_DIR / "candidates.db"
 FINDINGS_CSV = OUTPUT_DIR / "findings.csv"
-PROGRESS_JSON = OUTPUT_DIR / "progress.json"
 
 GDELT_API_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 GDELT_MIN_REQUEST_INTERVAL_SECONDS = 5
 GDELT_MAX_RETRIES = 3
 GDELT_RETRY_BACKOFF_SECONDS = 10
 
-DEFAULT_MAX_CANDIDATES_PER_COUNTRY = 5
+DEFAULT_MAX_CANDIDATES_PER_COUNTRY = 5   # per country, during harvest
+DEFAULT_ANALYZE_BATCH_SIZE = 20          # candidates sampled per `analyze` run
+DEFAULT_CANDIDATES_PER_CALL = 5          # candidates bundled into each Claude call during analyze
 ARTICLE_FETCH_TIMEOUT_SECONDS = 20
 ARTICLE_HTML_MAX_CHARS = 20000  # per candidate, after stripping <script>/<style>
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) TTXLitReviewer-DeepDive/1.0"
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS candidates (
+    uid TEXT PRIMARY KEY,
+    country TEXT NOT NULL,
+    fips_code TEXT,
+    language TEXT,
+    title TEXT,
+    domain TEXT,
+    date_published TEXT,
+    url TEXT,
+    harvested_at TEXT,
+    analyzed INTEGER DEFAULT 0,
+    relevant INTEGER,
+    original_language TEXT,
+    original_title TEXT,
+    english_summary TEXT,
+    analyzed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS harvested_countries (
+    country TEXT PRIMARY KEY,
+    harvested_at TEXT
+);
+"""
 
 # (FIPS 10-4 code, country name, GDELT sourcelang name or None if unsupported)
 # Verified against GDELT's own LOOKUP-COUNTRIES.TXT and LOOKUP-LANGUAGES.TXT.
@@ -265,10 +302,12 @@ COUNTRIES = [
 ]
 COUNTRIES.sort(key=lambda c: c[1])
 
+_ENGLISH_TERMS = {"topic": GDELT_TOPIC_TERMS["en"], "experience": GDELT_EXPERIENCE_TERMS["en"]}
 
-def setup_logging() -> None:
+
+def setup_logging(phase: str) -> None:
     config.LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    log_file = config.LOGS_DIR / f"deep_dive_{datetime.now():%Y-%m-%d}.log"
+    log_file = config.LOGS_DIR / f"deep_dive_{phase}_{datetime.now():%Y-%m-%d}.log"
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -276,15 +315,11 @@ def setup_logging() -> None:
     )
 
 
-def _load_progress() -> dict:
-    if PROGRESS_JSON.exists():
-        return json.loads(PROGRESS_JSON.read_text(encoding="utf-8"))
-    return {"completed_countries": [], "findings_count": 0}
-
-
-def _save_progress(progress: dict) -> None:
+def _get_connection() -> sqlite3.Connection:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    PROGRESS_JSON.write_text(json.dumps(progress, indent=2), encoding="utf-8")
+    conn = sqlite3.connect(DB_PATH)
+    conn.executescript(SCHEMA)
+    return conn
 
 
 def _ensure_findings_csv() -> None:
@@ -313,14 +348,21 @@ def _append_finding(country: str, item: dict, domain: str, published_date: str, 
         ])
 
 
+def _get_client() -> anthropic.Anthropic:
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or config.ANTHROPIC_API_KEY
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY not set -- needed for translation and relevance filtering.")
+    return anthropic.Anthropic(api_key=api_key, timeout=120.0)
+
+
 _TERM_TRANSLATION_CACHE: dict = {}
 
 
 def _get_terms_for_language(client: anthropic.Anthropic, language: str) -> dict:
     """Translate the compact EN topic/experience search terms into `language`,
     once per language, cached across all countries that share it."""
-    if language == "english":
-        return {"topic": GDELT_TOPIC_TERMS["en"], "experience": GDELT_EXPERIENCE_TERMS["en"]}
+    if not language or language == "english":
+        return _ENGLISH_TERMS
     if language in _TERM_TRANSLATION_CACHE:
         return _TERM_TRANSLATION_CACHE[language]
 
@@ -343,7 +385,7 @@ def _get_terms_for_language(client: anthropic.Anthropic, language: str) -> dict:
         terms = json.loads(text[start:end + 1])
     except Exception:
         log.exception("Failed to translate search terms into %s -- falling back to English terms.", language)
-        terms = {"topic": GDELT_TOPIC_TERMS["en"], "experience": GDELT_EXPERIENCE_TERMS["en"]}
+        terms = _ENGLISH_TERMS
 
     _TERM_TRANSLATION_CACHE[language] = terms
     return terms
@@ -403,15 +445,16 @@ def _fetch_article_html(url: str) -> str:
     return html[:ARTICLE_HTML_MAX_CHARS]
 
 
-def _analyze_candidates(client: anthropic.Anthropic, country: str, candidates: list) -> list:
-    """One Claude call for all of a country's candidates: judge relevance,
-    translate/summarize anything genuinely about standardized testing or
-    test-taker experience."""
+def _analyze_candidates(client: anthropic.Anthropic, candidates: list) -> list:
+    """One Claude call for a bundle of candidates (possibly from different
+    countries): judge relevance, translate/summarize anything genuinely
+    about standardized testing or test-taker experience."""
     blocks = []
     for i, c in enumerate(candidates):
         html_note = c["html"] if c["html"] else "(could not fetch full article -- judge from title only)"
         blocks.append(
             f"--- Candidate {i} ---\n"
+            f"Country: {c['country']}\n"
             f"Title: {c['title']}\n"
             f"Domain: {c['domain']}\n"
             f"Date: {c['date']}\n"
@@ -419,16 +462,16 @@ def _analyze_candidates(client: anthropic.Anthropic, country: str, candidates: l
             f"Page content (HTML, possibly noisy/truncated):\n{html_note}"
         )
     prompt = (
-        f"You are screening news candidates from {country}'s press for genuine relevance to "
-        f"standardized testing and test-taker experience (test anxiety, fairness, exam stress, "
-        f"testing policy, student wellbeing around exams, etc.) -- not generic use of the word "
-        f"'test', not test-prep advertising, not unrelated medical/product testing.\n\n"
-        f"For each candidate below, read the page content (if given) in its original language "
-        f"and decide if it's genuinely relevant. Respond with ONLY a JSON array, one object per "
-        f"candidate, in the same order, with this shape:\n"
-        f'{{"index": 0, "relevant": true/false, "original_language": "<language of the article>", '
-        f'"original_title": "<article\'s actual title, translated to English if you can>", '
-        f'"english_summary": "<2-3 sentence English summary of what it actually reports, only if relevant, else empty>"}}\n\n'
+        "You are screening news candidates from various countries' press for genuine relevance to "
+        "standardized testing and test-taker experience (test anxiety, fairness, exam stress, "
+        "testing policy, student wellbeing around exams, etc.) -- not generic use of the word "
+        "'test', not test-prep advertising, not unrelated medical/product testing.\n\n"
+        "For each candidate below, read the page content (if given) in its original language "
+        "and decide if it's genuinely relevant. Respond with ONLY a JSON array, one object per "
+        "candidate, in the same order, with this shape:\n"
+        '{"index": 0, "relevant": true/false, "original_language": "<language of the article>", '
+        "\"original_title\": \"<article's actual title, translated to English if you can>\", "
+        '"english_summary": "<2-3 sentence English summary of what it actually reports, only if relevant, else empty>"}\n\n'
         + "\n\n".join(blocks)
     )
     try:
@@ -440,78 +483,163 @@ def _analyze_candidates(client: anthropic.Anthropic, country: str, candidates: l
         start, end = text.find("["), text.rfind("]")
         return json.loads(text[start:end + 1])
     except Exception:
-        log.exception("Failed to analyze candidates for %s.", country)
+        log.exception("Failed to analyze candidate bundle.")
         return []
 
 
-def run(limit: int, max_candidates: int) -> None:
-    setup_logging()
-    _ensure_findings_csv()
-    progress = _load_progress()
-    completed = set(progress.get("completed_countries", []))
+def harvest(limit: int, max_candidates: int, reset: bool) -> None:
+    setup_logging("harvest")
+    conn = _get_connection()
+    if reset:
+        conn.execute("DELETE FROM harvested_countries")
+        conn.commit()
+        log.info("--reset: cleared harvested-country tracking (existing candidates are kept; re-harvesting just skips duplicates).")
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY") or config.ANTHROPIC_API_KEY
-    if not api_key:
-        log.error("ANTHROPIC_API_KEY not set -- cannot run (needed for translation and relevance filtering).")
-        return
-    client = anthropic.Anthropic(api_key=api_key, timeout=120.0)
+    client = _get_client()
 
-    todo = [c for c in COUNTRIES if c[1] not in completed]
+    done = {row[0] for row in conn.execute("SELECT country FROM harvested_countries")}
+    todo = [c for c in COUNTRIES if c[1] not in done]
     if limit:
         todo = todo[:limit]
 
-    log.info("Starting deep dive: %d countries this run (%d already done, %d total).", len(todo), len(completed), len(COUNTRIES))
+    log.info("Harvesting: %d countries this run (%d already harvested, %d total).", len(todo), len(done), len(COUNTRIES))
 
+    new_candidates = 0
     for fips_code, country, language in todo:
-        log.info("=== %s (%s) ===", country, language or "no language filter")
-        terms = _get_terms_for_language(client, language) if language else \
-            {"topic": GDELT_TOPIC_TERMS["en"], "experience": GDELT_EXPERIENCE_TERMS["en"]}
-
+        log.info("=== Harvesting %s (%s) ===", country, language or "no language filter")
+        terms = _get_terms_for_language(client, language)
         articles = _query_gdelt(fips_code, language, terms, max_candidates)
         log.info("  GDELT: %d candidate(s).", len(articles))
 
-        if articles:
-            candidates = []
-            for a in articles[:max_candidates]:
-                url = a.get("url")
-                if not url:
-                    continue
-                candidates.append({
-                    "url": url,
-                    "title": (a.get("title") or "").strip(),
-                    "domain": a.get("domain", ""),
-                    "date": a.get("seendate", ""),
-                    "html": _fetch_article_html(url),
-                })
+        for a in articles:
+            url = a.get("url")
+            if not url:
+                continue
+            cur = conn.execute(
+                "INSERT OR IGNORE INTO candidates "
+                "(uid, country, fips_code, language, title, domain, date_published, url, harvested_at, analyzed) "
+                "VALUES (?,?,?,?,?,?,?,?,?,0)",
+                (url, country, fips_code, language, (a.get("title") or "").strip(),
+                 a.get("domain", ""), a.get("seendate", ""), url, datetime.now(timezone.utc).isoformat()),
+            )
+            if cur.rowcount:
+                new_candidates += 1
 
-            if candidates:
-                results = _analyze_candidates(client, country, candidates)
-                for r in results:
-                    idx = r.get("index")
-                    if idx is None or not (0 <= idx < len(candidates)) or not r.get("relevant"):
-                        continue
-                    c = candidates[idx]
-                    _append_finding(country, r, c["domain"], c["date"], c["url"])
-                    progress["findings_count"] = progress.get("findings_count", 0) + 1
-                    log.info("  RELEVANT: %s", r.get("original_title", "")[:80])
+        conn.execute(
+            "INSERT OR REPLACE INTO harvested_countries (country, harvested_at) VALUES (?, ?)",
+            (country, datetime.now(timezone.utc).isoformat()),
+        )
+        conn.commit()
 
-        completed.add(country)
-        progress["completed_countries"] = sorted(completed)
-        _save_progress(progress)
+    total = conn.execute("SELECT COUNT(*) FROM candidates").fetchone()[0]
+    done_now = conn.execute("SELECT COUNT(*) FROM harvested_countries").fetchone()[0]
+    log.info(
+        "Harvest run complete. %d new candidate(s) this run, %d candidate(s) in the pool total. "
+        "%d/%d countries harvested overall.",
+        new_candidates, total, done_now, len(COUNTRIES),
+    )
+    conn.close()
 
-    log.info("Deep dive run complete. %d/%d countries done overall, %d finding(s) total.",
-              len(completed), len(COUNTRIES), progress.get("findings_count", 0))
+
+def _weighted_sample_without_replacement(rows: list, weight_by_country: dict, k: int) -> list:
+    """Efraimidis-Spirakis weighted sampling without replacement: each row
+    gets a random key raised to 1/weight, and we take the k largest keys.
+    Higher weight -> higher chance of being picked, no duplicates."""
+    keyed = []
+    for row in rows:
+        country = row[1]
+        weight = weight_by_country.get(country, 1.0)
+        key = random.random() ** (1.0 / weight)
+        keyed.append((key, row))
+    keyed.sort(key=lambda kv: kv[0], reverse=True)
+    return [row for _, row in keyed[:k]]
+
+
+def analyze(batch_size: int, candidates_per_call: int) -> None:
+    setup_logging("analyze")
+    conn = _get_connection()
+    _ensure_findings_csv()
+    client = _get_client()
+
+    unanalyzed = conn.execute(
+        "SELECT uid, country, language, title, domain, date_published, url "
+        "FROM candidates WHERE analyzed = 0"
+    ).fetchall()
+    if not unanalyzed:
+        log.info("No unanalyzed candidates in the pool -- run `python deep_dive_news.py harvest` first.")
+        conn.close()
+        return
+
+    analyzed_counts = dict(conn.execute(
+        "SELECT country, COUNT(*) FROM candidates WHERE analyzed = 1 GROUP BY country"
+    ).fetchall())
+    # weight favors countries with fewer already-analyzed candidates so far
+    weight_by_country = {row[1]: 1.0 / (1 + analyzed_counts.get(row[1], 0)) for row in unanalyzed}
+
+    sample = _weighted_sample_without_replacement(unanalyzed, weight_by_country, batch_size)
+    log.info(
+        "Analyzing %d candidate(s) sampled from a pool of %d unanalyzed (weighted toward under-covered countries).",
+        len(sample), len(unanalyzed),
+    )
+
+    findings_count = 0
+    for i in range(0, len(sample), candidates_per_call):
+        chunk = sample[i:i + candidates_per_call]
+        candidates = []
+        for uid, country, language, title, domain, date_published, url in chunk:
+            candidates.append({
+                "uid": uid, "country": country, "title": title,
+                "domain": domain, "date": date_published, "url": url,
+                "html": _fetch_article_html(url),
+            })
+
+        results = _analyze_candidates(client, candidates)
+        results_by_index = {r.get("index"): r for r in results if isinstance(r.get("index"), int)}
+
+        for idx, c in enumerate(candidates):
+            r = results_by_index.get(idx)
+            relevant = bool(r and r.get("relevant"))
+            conn.execute(
+                "UPDATE candidates SET analyzed=1, relevant=?, original_language=?, "
+                "original_title=?, english_summary=?, analyzed_at=? WHERE uid=?",
+                (1 if relevant else 0, (r or {}).get("original_language", ""),
+                 (r or {}).get("original_title", ""), (r or {}).get("english_summary", ""),
+                 datetime.now(timezone.utc).isoformat(), c["uid"]),
+            )
+            if relevant:
+                _append_finding(c["country"], r, c["domain"], c["date"], c["url"])
+                findings_count += 1
+                log.info("  RELEVANT [%s]: %s", c["country"], r.get("original_title", "")[:80])
+        conn.commit()
+
+    remaining = conn.execute("SELECT COUNT(*) FROM candidates WHERE analyzed = 0").fetchone()[0]
+    log.info(
+        "Analyze run complete. %d new finding(s) this run, %d candidate(s) still unanalyzed in the pool.",
+        findings_count, remaining,
+    )
+    conn.close()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--limit", type=int, default=None, help="Process at most this many countries this run.")
-    parser.add_argument("--max-candidates", type=int, default=DEFAULT_MAX_CANDIDATES_PER_COUNTRY,
-                         help="Max GDELT candidates to deep-analyze per country (default %(default)s).")
-    parser.add_argument("--reset", action="store_true", help="Clear progress and start over from the first country.")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_harvest = sub.add_parser("harvest", help="Pull candidate articles from GDELT into the local pool.")
+    p_harvest.add_argument("--limit", type=int, default=None, help="Harvest at most this many more countries this run.")
+    p_harvest.add_argument("--max-candidates", type=int, default=DEFAULT_MAX_CANDIDATES_PER_COUNTRY,
+                            help="Max GDELT candidates to pull per country (default %(default)s).")
+    p_harvest.add_argument("--reset", action="store_true",
+                            help="Re-harvest every country again (existing candidates are kept; duplicates are skipped).")
+
+    p_analyze = sub.add_parser("analyze", help="Sample from the harvested pool and send to Claude for relevance filtering + translation.")
+    p_analyze.add_argument("--batch-size", type=int, default=DEFAULT_ANALYZE_BATCH_SIZE,
+                            help="How many candidates to analyze this run (default %(default)s), "
+                                 "weighted-random-sampled to favor under-covered countries.")
+    p_analyze.add_argument("--candidates-per-call", type=int, default=DEFAULT_CANDIDATES_PER_CALL,
+                            help="How many candidates to bundle into each Claude call (default %(default)s).")
+
     args = parser.parse_args()
-
-    if args.reset and PROGRESS_JSON.exists():
-        PROGRESS_JSON.unlink()
-
-    run(limit=args.limit, max_candidates=args.max_candidates)
+    if args.command == "harvest":
+        harvest(limit=args.limit, max_candidates=args.max_candidates, reset=args.reset)
+    elif args.command == "analyze":
+        analyze(batch_size=args.batch_size, candidates_per_call=args.candidates_per_call)

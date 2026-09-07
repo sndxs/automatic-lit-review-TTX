@@ -184,35 +184,40 @@ Every run that finds new relevant records now does three more things:
 
 A separate, manually-run tool for a slower, broader sweep for
 test-taker-experience news than the daily run's GDELT query provides --
-**not** part of the scheduled task. For each of ~190 countries,
-alphabetically:
+**not** part of the scheduled task. Two phases, kept deliberately separate
+so cheap collection isn't coupled to metered AI analysis:
 
-1. Gets (or translates, once per language, then caches) the topic/
-   experience search terms into that country's dominant language, via the
-   Claude API.
-2. Queries GDELT's DOC 2.0 API for candidate articles from that country's
-   press, in that language.
-3. Fetches the full text of the top candidates and sends them all in one
-   Claude API call per country, asking it to judge genuine relevance and
-   translate/summarize anything relevant into English.
-4. Appends findings to `deep_dive_news/findings.csv` and checkpoints
-   progress in `deep_dive_news/progress.json` (gitignored -- this is raw
-   research data, not part of the paper) so a long sweep can be stopped and
-   resumed later without re-covering ground already done.
+**`harvest`** -- for each of ~190 countries (alphabetical, skipping any
+already harvested), translates the topic/experience search terms into that
+country's dominant language (once per language, cached via the Claude
+API), queries GDELT's DOC 2.0 API for candidate articles from that
+country's press, and stores them in `deep_dive_news/candidates.db`. No
+article fetching or relevance-judging here -- just collecting.
+
+**`analyze`** -- weighted-randomly samples a batch of not-yet-analyzed
+candidates from the pool, favoring countries with fewer already-analyzed
+candidates so repeated runs spread coverage across countries instead of
+exhausting whichever one got harvested first. Fetches each sampled
+candidate's full text, bundles a few per Claude call, and asks it to judge
+genuine relevance and translate/summarize anything relevant into English.
+Findings go to `deep_dive_news/findings.csv`.
 
 ```bash
-python deep_dive_news.py                  # resume where it left off
-python deep_dive_news.py --limit 20        # do at most 20 countries this run
-python deep_dive_news.py --reset           # clear progress, start over from A
-python deep_dive_news.py --max-candidates 8   # more/fewer articles read per country
+python deep_dive_news.py harvest                  # resume, all remaining countries
+python deep_dive_news.py harvest --limit 30        # only 30 more countries this run
+python deep_dive_news.py harvest --reset           # re-harvest every country (kept candidates aren't lost)
+python deep_dive_news.py analyze                   # analyze a batch (default 20) from the pool
+python deep_dive_news.py analyze --batch-size 50
 ```
 
-Needs `ANTHROPIC_API_KEY` set (same `.env` as above). Cost/time note: one
-Claude call per unique language (cached across countries that share it)
-plus up to one call per country with candidates -- a full sweep is roughly
-150-250 calls, plus GDELT's 5-second-per-request courtesy throttle even on
-countries with zero results, so a full run takes a while. Use `--limit` to
-run it in bounded chunks over multiple sessions.
+`deep_dive_news/` (the SQLite candidate pool + findings CSV) is gitignored
+-- this is raw research data, not part of the paper. Needs
+`ANTHROPIC_API_KEY` set (same `.env` as above). Cost/time note: a full
+harvest costs one Claude call per unique language (cached, ~40-60 total)
+plus GDELT's 5-second-per-request courtesy throttle even on zero-result
+countries (15-30+ min regardless of findings). `analyze` costs roughly
+`batch_size / candidates_per_call` Claude calls. Use `--limit` /
+`--batch-size` to run either phase in bounded chunks across sessions.
 
 ## Editing search terms / precision
 
