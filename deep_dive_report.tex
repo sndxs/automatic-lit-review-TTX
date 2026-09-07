@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{parskip}
+
+\hypersetup{
+    colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue,
+    pdftitle={Deep-Dive News Search: Test-Taker Experience Across Countries},
+    pdfauthor={Sergio Araneda}
+}
+
+\title{Deep-Dive News Search: Test-Taker Experience Across Countries\thanks{This is an automatically machine-generated summary, produced by \texttt{deep\_dive\_news.py} from an automated, country-by-country news search. Findings here are leads to verify, not verified facts -- read the source before citing anything from this document elsewhere.}}
+\author{Sergio Araneda \\ Caveon \\ Correspondence: \texttt{sondaxius@gmail.com}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Methodology}
+
+This report summarizes findings from an automated, country-by-country news search (\texttt{deep\_dive\_news.py}), separate from this project's main academic literature pipeline. For each country, search terms are translated into that country's dominant language via the Claude API, GDELT's DOC~2.0 API is queried for candidate articles from that country's press, and candidates are fetched and screened for genuine relevance (not generic use of the word ``test'') by the same model, which also translates and summarizes anything relevant into English. As of this report, 189 of 189 countries have been searched (harvested), 7 candidate articles have been read and judged, and \textbf{3 were found genuinely relevant}, spanning 2 countries.
+
+\section{Cross-Country Themes}
+
+No themes recurring across two or more countries have been identified yet -- check back as more findings accumulate.
+
+\section{Findings by Country}
+
+\subsection{United Kingdom}
+
+\textbf{Compliance and access dominate university assessment plans, confirms testing giant} \citep{thepienewscom2026n0} (English). The PIE News reports that growing scrutiny of international student recruitment is prompting universities to place greater emphasis on trusted and accessible English language testing for admissions, according to a major testing organization. The piece discusses how compliance concerns and access issues are shaping university assessment policy for international students.
+
+\subsection{United States}
+
+\textbf{Do Florida's record-high school grades mask concerns about student achievement?} \citep{wlrnorg2026n1} (English). This WLRN article examines Florida's school grading system, which is based partly on the Florida Assessment of Student Thinking (FAST) standardized test results. It questions whether record numbers of A and B grades mask the reality that students are falling behind nationally in reading and math, raising concerns among parents and educators about whether state testing standards truly reflect learning.
+
+\textbf{The graduate admissions exam grind} \citep{cavalierdailycom2026n2} (English). The Cavalier Daily examines how University of Virginia students face renewed standardized testing pressure with graduate school entrance exams (like GRE), after already dealing with such exams in high school. It explores the stress and preparation involved in these admissions tests.
+
+\bibliographystyle{plainnat}
+\begin{thebibliography}{99}
+
+\bibitem[thepienews.com(2026)]{thepienewscom2026n0}
+thepienews.com. (2026). Compliance and access dominate university assessment plans, confirms testing giant. \url{https://thepienews.com/compliance-and-access-dominate-university-assessment-plans-confirms-testing-giant/}
+
+\bibitem[wlrn.org(2026)]{wlrnorg2026n1}
+wlrn.org. (2026). Do Florida's record-high school grades mask concerns about student achievement?. \url{https://www.wlrn.org/education/2026-07-15/do-floridas-record-high-school-grades-mask-concerns-about-student-achievement}
+
+\bibitem[cavalierdaily.com(2026)]{cavalierdailycom2026n2}
+cavalierdaily.com. (2026). The graduate admissions exam grind. \url{https://www.cavalierdaily.com/article/2026/09/the-graduate-admissions-exam-grind}
+
+\end{thebibliography}
+
+\end{document}
